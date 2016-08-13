@@ -99,7 +99,7 @@ Prices in table below are as of Aug 13, 2016.  If you are making this, you may c
 | 5V output DC-DC Converter (2.5W) | Recom Power | [R-78E5.0-0.5] (https://www.digikey.com/product-detail/en/recom-power/R-78E5.0-0.5/945-1648-5-ND/2834904) | 1 | $2.84 | $2.84 |
 | Slide Switch | CW Industries | [GF-123-0054] (https://www.digikey.com/product-detail/en/cw-industries/GF-123-0054/CWI333-ND/4089770) | 2 | $0.93 | $1.86 |
 | 3-Pin fan connector | TE Connectivity | [640456-3] (https://www.digikey.com/product-detail/en/te-connectivity-amp-connectors/640456-3/A19470-ND/259010) | 2 | $0.13 | $0.26 |
-| Total Cost  | ------------ | ----------- | -------- | ----------- | $208.18 |
+| Total Cost  | | | | | $208.18 |
 
 
 # <a name="operation"/>Operation Manual
