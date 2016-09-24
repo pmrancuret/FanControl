@@ -8,6 +8,7 @@
 #define _FanControl_H_
 #include "Arduino.h"
 // add your includes for the project FanControl here
+#include "LiquidCrystal.h"
 
 
 // end of add your includes here
@@ -15,6 +16,8 @@
 
 // add your function definitions for the project FanControl here
 
+/* Declaration of lcd object */
+extern LiquidCrystal lcd;
 
 
 
