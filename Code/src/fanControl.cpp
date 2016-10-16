@@ -4,20 +4,36 @@
 #include "FanControl.h"
 
 /*******************************************************************************
- * VARIABLE DEFINITIONS
+ * GLOBAL VARIABLE DEFINITIONS
  ******************************************************************************/
 /* Define the 'lcd' object used for interfacing with LCD screen */
-LiquidCrystal lcd ( LCDRSPIN,  // set the RS pin
-  LCDRWPIN,                    // set the RW pin
-  LCDENABLEPIN,                // set the Enable pin
-  LCDD0PIN,                    // set the data 0 pin
-  LCDD1PIN,                    // set the data 1 pin
-  LCDD2PIN,                    // set the data 2 pin
-  LCDD3PIN );                  // set the data 3 pin
-unsigned long hall1Period = 1; // period count for hall sensor 1
-unsigned long hall2Period = 1; // period count for hall sensor 2
-unsigned int  Fan1RPM     = 0; // Fan 1 speed, in rpm
-unsigned int  Fan2RPM     = 0; // Fan 2 speed, in rpm
+LiquidCrystal lcd ( LCDRSPIN,     // set the RS pin
+  LCDRWPIN,                       // set the RW pin
+  LCDENABLEPIN,                   // set the Enable pin
+  LCDD0PIN,                       // set the data 0 pin
+  LCDD1PIN,                       // set the data 1 pin
+  LCDD2PIN,                       // set the data 2 pin
+  LCDD3PIN );                     // set the data 3 pin
+unsigned long  hall1Period   = 1; // period count for hall sensor 1
+unsigned long  hall2Period   = 1; // period count for hall sensor 2
+unsigned short Fan1RPM       = 0; // Fan 1 speed, in rpm
+unsigned short Fan2RPM       = 0; // Fan 2 speed, in rpm
+byte           Pwm1Duty      = 0; // PWM 1 duty cycle (0-255 maps to 0%-100%)
+byte           Pwm2Duty      = 0; // PWM 2 duty cycle (0-255 maps to 0%-100%)
+unsigned short Temp1         = 0; // Temperature 1 input, stored digitally (0-1023)
+unsigned short Temp2         = 0; // Temperature 2 input, stored digitally (0-1023)
+unsigned long  lastEdgeTime1 = 0; // timestamp of previous edge of hall sensor 1
+unsigned long  lastEdgeTime2 = 0; // timestamp of previous edge of hall sensor 2
+
+/*******************************************************************************
+ * EEPROM-STORED GLOBAL VARIABLE DEFAULT DEFINITIONS
+ ******************************************************************************/
+short        Temp1Offset    = 500; // Offset of Temperature 1 measurement, mV at 0 degC
+short        Temp2Offset    = 500; // Offset of Temperature 2 measurement, mV at 0 degC
+int          Temp1DegCPer5V = 500; // Scale of temperature 1 measurement, in degrees celcius per 5 Volts
+int          Temp2DegCPer5V = 500; // Scale of temperature 2 measurement, in degrees celcius per 5 Volts
+unsigned int minRpm1        = 200; // minimum speed measurement for fan 1
+unsigned int minRpm2        = 200; // minimum speed measurement for fan 2
 
 /*******************************************************************************
  * LOCAL FUNCTION DECLARATIONS
@@ -86,9 +102,9 @@ void setup ( void )
 
   /* Clear LCD screen and set to display default info screen */
   lcd.clear ( );                    // clear LCD screen and move cursor to start
-  lcd.print ( "TIME:    0 s" );     // Print time info on first line
+  lcd.print ( "T1:999.9T2:999.9" ); // Print temperature info on first line
   lcd.setCursor ( 0, 1 );           // set cursor to start of second line on LCD
-  lcd.print ( "F1:9999, F2:9999" ); // Print fan period info on second line
+  lcd.print ( "N1:9999, N2:9999" ); // Print fan period info on second line
 
   return; // end of setup()
 }         // end of setup()
@@ -109,12 +125,12 @@ void setup ( void )
 ******************************************************************************/
 void loop ( void )
 {
-  static unsigned short lcdLoops = 0;          // number of loops run since last LCD update
-  static unsigned long  loopsRun = 0;          // total number of loops run
-  static unsigned long  lastTime = 0;          // time when last loop began (microseconds/64)
-  unsigned long         thisTime = micros ( ); // time now (in microseconds/64)
-  unsigned long         runTime_s;             // program run-time (seconds)
-  char                  lcdBuff [ LCDCOLS ];   // buffer of chars used for LCD printing
+  static byte          lcdLoops = 0; // number of loops run since last LCD update
+  static unsigned long loopsRun = 0; // total number of loops run
+  static unsigned long lastTime = 0; // time when last loop began (microseconds/64)
+// unsigned long        runTime_s;             // program run-time (seconds)
+  char                 lcdBuff [ LCDCOLS * LCDROWS ]; // buffer of chars used for LCD printing
+  unsigned long        thisTime = micros ( );         // time now (in microseconds/64)
 
   /* Check to see if it is time to run a new loop, otherwise return */
   if ( thisTime - lastTime >= LOOPTIME_US * 64 ) // enough time elapsed for new loop
@@ -123,12 +139,28 @@ void loop ( void )
     return; // skip this loop iteration
 
   /* keep track of total program run time */
-  runTime_s = loopsRun * LOOPTIME_US / 1000000; // track runtime in seconds
-  loopsRun++;                                   // increment count of loops run
+// runTime_s = loopsRun * LOOPTIME_US / 1000000; // track runtime in seconds
+  loopsRun++; // increment count of loops run
 
   /* Calculate Fan speeds in RPM */
-  Fan1RPM = (unsigned int) ( ( 1000000L / hall1Period ) * 60 / FAN1PPR ); // Fan1 speed
-  Fan2RPM = (unsigned int) ( ( 1000000L / hall2Period ) * 60 / FAN2PPR ); // Fan2 speed
+  if ( ( hall1Period >= ( ( (unsigned long) 1000000L / minRpm1 ) * 60 / FAN1PPR ) ) ||                       // if fan period is too large
+    ( ( ( thisTime - lastEdgeTime1 ) >> 5 ) >= ( ( (unsigned long) 1000000L / minRpm1 ) * 60 / FAN1PPR ) ) ) // or time since last edge is too large
+    Fan1RPM = minRpm1;                                                                                       // use minimum RPM value
+  else
+    Fan1RPM = (unsigned short) ( ( 1000000L / hall1Period ) * 60 / FAN1PPR );                                // Fan1 speed
+  if ( Fan1RPM > MAXN1 )                                                                                     // if RPM is too large
+    Fan1RPM = MAXN1;                                                                                         // restrict to max value
+  if ( ( hall2Period >= ( ( (unsigned long) 1000000L / minRpm2 ) * 60 / FAN2PPR ) ) ||                       // if fan period is too large
+    ( ( ( thisTime - lastEdgeTime2 ) >> 5 ) >= ( ( (unsigned long) 1000000L / minRpm2 ) * 60 / FAN2PPR ) ) ) // or time since last edge is too large
+    Fan2RPM = minRpm2;                                                                                       // use minimum RPM value
+  else
+    Fan2RPM = (unsigned short) ( ( 1000000L / hall2Period ) * 60 / FAN2PPR );  // Fan2 speed
+  if ( Fan2RPM > MAXN2 )                                                       // if RPM is too large
+    Fan2RPM = MAXN2;                                                           // restrict to max value
+
+  /* Read temperature measurements */
+  Temp1 = analogRead ( TEMP1PIN ); // read temp sensor 1
+  Temp2 = analogRead ( TEMP2PIN ); // read temp sensor 2
 
   /* Update LCD if needed */
   if ( ++lcdLoops >= LCD_DEC ) // if enough loops have occured, update LCD
@@ -136,14 +168,19 @@ void loop ( void )
     lcdLoops = 0; // reset LCD loop counter
 
     /* Mark Run-time on first line of LCD display */
-    sprintf ( lcdBuff, "TIME: %4lu s", runTime_s ); // set time as first line
-    lcd.setCursor ( 0, 0 );                         // set cursor to start of first line on LCD
-    lcd.print ( lcdBuff );                          // print first line
+// sprintf ( lcdBuff, "T1:%3hu.%huT2:%3hu.%hu",
+// DigTemp1ToC10 ( Temp1 ) / 10,
+// abs ( DigTemp1ToC10 ( Temp1 ) ) % 10,
+// DigTemp2ToC10 ( Temp2 ) / 10,
+// abs ( DigTemp2ToC10 ( Temp2 ) ) % 10 ); // set temperatures as first line
+    sprintf ( lcdBuff, "T1:%4hu, T2:%4hu", Temp1, Temp2 ); // set temperatures as first line
+    lcd.setCursor ( 0, 0 );                                // set cursor to start of first line on LCD
+    lcd.print ( lcdBuff );                                 // print first line
 
     /* Mark hall-sensor period values on second line of LCD display */
-    sprintf ( lcdBuff, "F1:%4u, F2:%4u", Fan1RPM, Fan2RPM ); // set fan speeds
-    lcd.setCursor ( 0, 1 );                                  // set cursor to start of second line on LCD
-    lcd.print ( lcdBuff );                                   // print second line
+    sprintf ( lcdBuff, "N1:%4hu, N2:%4hu", Fan1RPM, Fan2RPM ); // set fan speeds
+    lcd.setCursor ( 0, 1 );                                    // set cursor to start of second line on LCD
+    lcd.print ( lcdBuff );                                     // print second line
   }
 
   /* Read serial data if available, and echo it back */
@@ -152,9 +189,13 @@ void loop ( void )
     Serial.write ( Serial.read ( ) );
   }
 
+  /* Calculate required duty cycle */
+  Pwm1Duty = 0xC0; // use constant duty for now
+  Pwm2Duty = 0x01; // use constant duty for now
+
   /* Set duty cycle for pwm outputs */
-  analogWrite ( PWM1PIN, 0xFF ); // set pwm1 to 100% duty
-  analogWrite ( PWM2PIN, 0x01 ); // set pwm2 to 50% duty
+  analogWrite ( PWM1PIN, Pwm1Duty ); // set pwm1 duty
+  analogWrite ( PWM2PIN, Pwm2Duty ); // set pwm2 duty
 
 
   return; // end of loop()
@@ -177,8 +218,7 @@ void loop ( void )
 ******************************************************************************/
 void hall1ISR ( void )
 {
-  static unsigned long lastEdgeTime = 0;          // timestamp of previous edge
-  unsigned long        thisEdgeTime = micros ( ); // timestamp of current edge
+  unsigned long thisEdgeTime = micros ( ); // timestamp of current edge
 
   /* Hall Period (microseconds) calculated using the difference between
    * rising and falling edges, multiplied by two.  The multiply by two
@@ -186,9 +226,9 @@ void hall1ISR ( void )
    * edge, which counts the time length of half a period. Since the timer0
    * speed is increased by 64, we need to also divide by 64.  So, right bit
    * shifting by 5 yields the overall divide by 32.*/
-  hall1Period  = ( thisEdgeTime - lastEdgeTime ) >> 5; // calculate period in microseconds
+  hall1Period   = ( thisEdgeTime - lastEdgeTime1 ) >> 5; // calculate period in microseconds
 
-  lastEdgeTime = thisEdgeTime; // save current edge time for next iteration
+  lastEdgeTime1 = thisEdgeTime; // save current edge time for next iteration
 
   return; // end of hall1ISR()
 }         // end of hall1ISR()
@@ -210,8 +250,7 @@ void hall1ISR ( void )
 ******************************************************************************/
 void hall2ISR ( void )
 {
-  static unsigned long lastEdgeTime = 0;          // timestamp of previous edge
-  unsigned long        thisEdgeTime = micros ( ); // timestamp of current edge
+  unsigned long thisEdgeTime = micros ( ); // timestamp of current edge
 
   /* Hall Period (microseconds) calculated using the difference between
    * rising and falling edges, multiplied by two.  The multiply by two
@@ -219,9 +258,9 @@ void hall2ISR ( void )
    * edge, which counts the time length of half a period. Since the timer0
    * speed is increased by 64, we need to also divide by 64.  So, right bit
    * shifting by 5 yields the overall divide by 32.*/
-  hall2Period  = ( thisEdgeTime - lastEdgeTime ) >> 5; // calculate period in microseconds
+  hall2Period   = ( thisEdgeTime - lastEdgeTime2 ) >> 5; // calculate period in microseconds
 
-  lastEdgeTime = thisEdgeTime; // save current edge time for next iteration
+  lastEdgeTime2 = thisEdgeTime; // save current edge time for next iteration
 
   return; // end of hall2ISR()
 }         // end of hall2ISR()
