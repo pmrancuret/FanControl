@@ -162,7 +162,7 @@ Arduino PWM outputs operate separate buck converters to regulate each fan voltag
 <text x="73.66" y="63.5" size="1.778" layer="21">TEMP 2</text>
 <text x="8.382" y="1.143" size="1.778" layer="21">TEMP 1</text>
 <text x="45.72" y="22.86" size="1.778" layer="21">Fan Control Board</text>
-<text x="50.8" y="19.05" size="1.778" layer="21">Rev A</text>
+<text x="50.8" y="19.05" size="1.778" layer="21">Rev B</text>
 <text x="39.37" y="13.97" size="1.778" layer="21">© 2016 Paul M. Rancuret</text>
 </plain>
 <libraries>
@@ -2445,6 +2445,56 @@ design rules under a new name.</description>
 <wire x1="25.4" y1="68.58" x2="25.4" y2="69.85" width="0.4064" layer="1"/>
 </signal>
 </signals>
+<errors>
+<approved hash="18,29,6f39b70d248c6e67"/>
+<approved hash="18,29,29920540ca431e71"/>
+<approved hash="18,29,ce1a450305e9b811"/>
+<approved hash="18,29,97b7023312c54c62"/>
+<approved hash="18,29,0702fe3f284427dc"/>
+<approved hash="18,29,6e25447de38a4dab"/>
+<approved hash="18,29,b39209414642c270"/>
+<approved hash="18,29,fa1bd10311e8de10"/>
+<approved hash="18,29,ebb7fbc5bb60eb14"/>
+<approved hash="18,29,5210ca6c64eb85f1"/>
+<approved hash="18,29,810027b06506342a"/>
+<approved hash="18,29,c83c599c469fa4df"/>
+<approved hash="18,29,963567820df95627"/>
+<approved hash="18,29,8d9b16ae541809c1"/>
+<approved hash="18,29,3792ba540cc6b919"/>
+<approved hash="18,29,94d416d2f2340bd3"/>
+<approved hash="18,29,74e8adc71fb99def"/>
+<approved hash="18,29,5fd81c0c11a45160"/>
+<approved hash="18,29,e3e6e14c89795080"/>
+<approved hash="18,29,ef871469e8b12c2f"/>
+<approved hash="18,29,3fbd5783fdf257fb"/>
+<approved hash="18,29,15c48e2c5b1a061e"/>
+<approved hash="18,29,aec7c301754749cd"/>
+<approved hash="18,29,fb9bcb6d95e3b52d"/>
+<approved hash="18,29,195fbf326a043bf5"/>
+<approved hash="18,29,a16920c93fcb0c8a"/>
+<approved hash="18,29,8d45c26be6126444"/>
+<approved hash="18,29,6d78ef7e5a9ff278"/>
+<approved hash="18,29,d06e058471b18780"/>
+<approved hash="18,29,6ec07e1473bd6079"/>
+<approved hash="18,29,503bbcd5400b9395"/>
+<approved hash="18,29,c48eec18502d7a80"/>
+<approved hash="18,29,494cf05fd05ecca5"/>
+<approved hash="18,29,009159f1f0f98b06"/>
+<approved hash="18,29,38384ce70f01031f"/>
+<approved hash="18,29,a2b404a0c68f505a"/>
+<approved hash="18,29,867dcbcdee708c8b"/>
+<approved hash="18,29,8a38fce73d068118"/>
+<approved hash="18,29,68b444a1848e5e5a"/>
+<approved hash="18,29,2fd829c72b89f66d"/>
+<approved hash="18,29,8b9fb4f91d569ca6"/>
+<approved hash="18,29,53e5c283c439555f"/>
+<approved hash="18,29,c4ed4564d49be112"/>
+<approved hash="18,29,02451e34d7a8bcf6"/>
+<approved hash="18,29,7a88b678b5bd794d"/>
+<approved hash="18,29,ccac824a8109cfef"/>
+<approved hash="18,29,01b6b534b3a48df3"/>
+<approved hash="18,29,76650283043970df"/>
+</errors>
 </board>
 </drawing>
 </eagle>
