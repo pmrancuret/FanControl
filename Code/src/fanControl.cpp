@@ -7,23 +7,23 @@
  * GLOBAL VARIABLE DEFINITIONS
  ******************************************************************************/
 /* Define the 'lcd' object used for interfacing with LCD screen */
-LiquidCrystal lcd ( LCDRSPIN,     // set the RS pin
-  LCDRWPIN,                       // set the RW pin
-  LCDENABLEPIN,                   // set the Enable pin
-  LCDD0PIN,                       // set the data 0 pin
-  LCDD1PIN,                       // set the data 1 pin
-  LCDD2PIN,                       // set the data 2 pin
-  LCDD3PIN );                     // set the data 3 pin
-unsigned long  hall1Period   = 1; // period count for hall sensor 1
-unsigned long  hall2Period   = 1; // period count for hall sensor 2
-unsigned short Fan1RPM       = 0; // Fan 1 speed, in rpm
-unsigned short Fan2RPM       = 0; // Fan 2 speed, in rpm
-byte           Pwm1Duty      = 0; // PWM 1 duty cycle (0-255 maps to 0%-100%)
-byte           Pwm2Duty      = 0; // PWM 2 duty cycle (0-255 maps to 0%-100%)
-unsigned short Temp1         = 0; // Temperature 1 input, stored digitally (0-1023)
-unsigned short Temp2         = 0; // Temperature 2 input, stored digitally (0-1023)
-unsigned long  lastEdgeTime1 = 0; // timestamp of previous edge of hall sensor 1
-unsigned long  lastEdgeTime2 = 0; // timestamp of previous edge of hall sensor 2
+LiquidCrystal lcd ( LCDRSPIN,             // set the RS pin
+  LCDRWPIN,                               // set the RW pin
+  LCDENABLEPIN,                           // set the Enable pin
+  LCDD0PIN,                               // set the data 0 pin
+  LCDD1PIN,                               // set the data 1 pin
+  LCDD2PIN,                               // set the data 2 pin
+  LCDD3PIN );                             // set the data 3 pin
+volatile unsigned long hall1Period   = 1; // period count for hall sensor 1
+volatile unsigned long hall2Period   = 1; // period count for hall sensor 2
+unsigned short         Fan1RPM       = 0; // Fan 1 speed, in rpm
+unsigned short         Fan2RPM       = 0; // Fan 2 speed, in rpm
+byte                   Pwm1Duty      = 0; // PWM 1 duty cycle (0-255 maps to 0%-100%)
+byte                   Pwm2Duty      = 0; // PWM 2 duty cycle (0-255 maps to 0%-100%)
+unsigned short         Temp1         = 0; // Temperature 1 input, stored digitally (0-1023)
+unsigned short         Temp2         = 0; // Temperature 2 input, stored digitally (0-1023)
+volatile unsigned long lastEdgeTime1 = 0; // timestamp of previous edge of hall sensor 1
+volatile unsigned long lastEdgeTime2 = 0; // timestamp of previous edge of hall sensor 2
 
 /*******************************************************************************
  * EEPROM-STORED GLOBAL VARIABLE DEFAULT DEFINITIONS
@@ -32,8 +32,8 @@ short        Temp1Offset    = 500; // Offset of Temperature 1 measurement, mV at
 short        Temp2Offset    = 500; // Offset of Temperature 2 measurement, mV at 0 degC
 int          Temp1DegCPer5V = 500; // Scale of temperature 1 measurement, in degrees celcius per 5 Volts
 int          Temp2DegCPer5V = 500; // Scale of temperature 2 measurement, in degrees celcius per 5 Volts
-unsigned int minRpm1        = 200; // minimum speed measurement for fan 1
-unsigned int minRpm2        = 200; // minimum speed measurement for fan 2
+unsigned int minRpm1        = 50;  // minimum speed measurement for fan 1
+unsigned int minRpm2        = 50;  // minimum speed measurement for fan 2
 
 /*******************************************************************************
  * LOCAL FUNCTION DECLARATIONS
@@ -145,14 +145,14 @@ void loop ( void )
   /* Calculate Fan speeds in RPM */
   if ( ( hall1Period >= ( ( (unsigned long) 1000000L / minRpm1 ) * 60 / FAN1PPR ) ) ||                       // if fan period is too large
     ( ( ( thisTime - lastEdgeTime1 ) >> 5 ) >= ( ( (unsigned long) 1000000L / minRpm1 ) * 60 / FAN1PPR ) ) ) // or time since last edge is too large
-    Fan1RPM = minRpm1;                                                                                       // use minimum RPM value
+    Fan1RPM = 0;                                                                                             // use zero RPM value
   else
     Fan1RPM = (unsigned short) ( ( 1000000L / hall1Period ) * 60 / FAN1PPR );                                // Fan1 speed
   if ( Fan1RPM > MAXN1 )                                                                                     // if RPM is too large
     Fan1RPM = MAXN1;                                                                                         // restrict to max value
   if ( ( hall2Period >= ( ( (unsigned long) 1000000L / minRpm2 ) * 60 / FAN2PPR ) ) ||                       // if fan period is too large
     ( ( ( thisTime - lastEdgeTime2 ) >> 5 ) >= ( ( (unsigned long) 1000000L / minRpm2 ) * 60 / FAN2PPR ) ) ) // or time since last edge is too large
-    Fan2RPM = minRpm2;                                                                                       // use minimum RPM value
+    Fan2RPM = 0;                                                                                             // use zero RPM value
   else
     Fan2RPM = (unsigned short) ( ( 1000000L / hall2Period ) * 60 / FAN2PPR );  // Fan2 speed
   if ( Fan2RPM > MAXN2 )                                                       // if RPM is too large
@@ -190,8 +190,8 @@ void loop ( void )
   }
 
   /* Calculate required duty cycle */
-  Pwm1Duty = 0xC0; // use constant duty for now
-  Pwm2Duty = 0x01; // use constant duty for now
+  Pwm1Duty = 0x02; // use constant duty for now
+  Pwm2Duty = 0x00; // use constant duty for now
 
   /* Set duty cycle for pwm outputs */
   analogWrite ( PWM1PIN, Pwm1Duty ); // set pwm1 duty

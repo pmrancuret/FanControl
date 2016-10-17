@@ -100,17 +100,17 @@
 /*******************************************************************************
  * GLOBAL VARIABLE DECLARATIONS
  ******************************************************************************/
-extern LiquidCrystal  lcd;           // lcd screen class object
-extern unsigned long  hall1Period;   // period count for hall sensor 1 (microseconds)
-extern unsigned long  hall2Period;   // period count for hall sensor 2 (microseconds)
-extern unsigned short Fan1RPM;       // Fan 1 speed, in rpm
-extern unsigned short Fan2RPM;       // Fan 2 speed, in rpm
-extern byte           Pwm1Duty;      // PWM 1 duty cycle (0-255 maps to 0%-100%)
-extern byte           Pwm2Duty;      // PWM 2 duty cycle (0-255 maps to 0%-100%)
-extern unsigned short Temp1;         // Temperature 1 input, stored digitally (0-1023)
-extern unsigned short Temp2;         // Temperature 2 input, stored digitally (0-1023)
-extern unsigned long  lastEdgeTime1; // timestamp of previous edge of hall sensor 1
-extern unsigned long  lastEdgeTime2; // timestamp of previous edge of hall sensor 2
+extern LiquidCrystal          lcd;           // lcd screen class object
+extern volatile unsigned long hall1Period;   // period count for hall sensor 1 (microseconds)
+extern volatile unsigned long hall2Period;   // period count for hall sensor 2 (microseconds)
+extern unsigned short         Fan1RPM;       // Fan 1 speed, in rpm
+extern unsigned short         Fan2RPM;       // Fan 2 speed, in rpm
+extern byte                   Pwm1Duty;      // PWM 1 duty cycle (0-255 maps to 0%-100%)
+extern byte                   Pwm2Duty;      // PWM 2 duty cycle (0-255 maps to 0%-100%)
+extern unsigned short         Temp1;         // Temperature 1 input, stored digitally (0-1023)
+extern unsigned short         Temp2;         // Temperature 2 input, stored digitally (0-1023)
+extern volatile unsigned long lastEdgeTime1; // timestamp of previous edge of hall sensor 1
+extern volatile unsigned long lastEdgeTime2; // timestamp of previous edge of hall sensor 2
 
 /*******************************************************************************
  * EEPROM-STORED GLOBAL VARIABLE DECLARATIONS
