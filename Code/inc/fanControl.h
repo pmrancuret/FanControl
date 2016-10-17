@@ -53,43 +53,43 @@
 #define DigTemp1ToC10( a ) \
   /* Converts from digital value to degrees Celsius times 10 */ \
   /* Returns the result as a short integer */ \
-  ( (short) ( ( ( ( (int) a * 10 ) - ( ( (int) Temp1Offset << 10 ) / 500 ) ) * (int) Temp1DegCPer5V ) >> 10 ) )
+  ( (short int) ( ( ( ( (long int) a * 10 ) - ( ( (long int) Temp1Offset << 10 ) / 500 ) ) * (long int) Temp1DegCPer5V ) >> 10 ) )
 #define DigTemp2ToC10( a ) \
   /* Converts from digital value to degrees Celsius times 10 */ \
   /* Returns the result as a short integer */ \
-  ( (short) ( ( ( ( (int) a * 10 ) - ( ( (int) Temp2Offset << 10 ) / 500 ) ) * (int) Temp2DegCPer5V ) >> 10 ) )
+  ( (short int) ( ( ( ( (long int) a * 10 ) - ( ( (long int) Temp2Offset << 10 ) / 500 ) ) * (long int) Temp2DegCPer5V ) >> 10 ) )
 #define DigTemp1ToF10( a ) \
   /* Converts from digital value to degrees Fahrenheit times 10 */ \
   /* Returns the result as a short integer */ \
-  ( (short) ( ( ( ( (int) a * 90 ) - ( ( ( (int) Temp1Offset * 9 ) << 10 ) / 500 ) ) * (int) Temp1DegCPer5V / 5 ) >> 10 ) )
+  ( (short int) ( ( ( ( (long int) a * 90 ) - ( ( ( (long int) Temp1Offset * 9 ) << 10 ) / 500 ) ) * (long int) Temp1DegCPer5V / 5 ) >> 10 ) )
 #define DigTemp2ToF10( a ) \
   /* Converts from digital value to degrees Fahrenheit times 10 */ \
   /* Returns the result as a short integer */ \
-  ( (short) ( ( ( ( (int) a * 90 ) - ( ( ( (int) Temp2Offset * 9 ) << 10 ) / 500 ) ) * (int) Temp2DegCPer5V / 5 ) >> 10 ) )
+  ( (short int) ( ( ( ( (long int) a * 90 ) - ( ( ( (long int) Temp2Offset * 9 ) << 10 ) / 500 ) ) * (long int) Temp2DegCPer5V / 5 ) >> 10 ) )
 #define C10ToDigTemp1( a ) \
   /* Converts from signed integer Celsius temperature times to to digital value */ \
   /* Returns the result as an unsigned short integer */ \
-  ( (unsigned short) ( ( ( ( ( (int) a ) << 10 ) / (int) Temp1DegCPer5V ) + ( ( (int) Temp1Offset << 10 ) / 500 ) ) / 10 ) )
+  ( (unsigned short int) ( ( ( ( ( (long int) a ) << 10 ) / (long int) Temp1DegCPer5V ) + ( ( (long int) Temp1Offset << 10 ) / 500 ) ) / 10 ) )
 #define C10ToDigTemp2( a ) \
   /* Converts from signed integer Celsius temperature times to to digital value */ \
   /* Returns the result as an unsigned short integer */ \
-  ( (unsigned short) ( ( ( ( ( (int) a ) << 10 ) / (int) Temp2DegCPer5V ) + ( ( (int) Temp2Offset << 10 ) / 500 ) ) / 10 ) )
+  ( (unsigned short int) ( ( ( ( ( (long int) a ) << 10 ) / (long int) Temp2DegCPer5V ) + ( ( (long int) Temp2Offset << 10 ) / 500 ) ) / 10 ) )
 #define F10ToDigTemp1( a ) \
   /* Converts from signed integer Fahrenheit temperature times to to digital value */ \
   /* Returns the result as an unsigned short integer */ \
-  ( (unsigned short) ( ( ( ( ( ( (int) a - 320 ) * 5 / 9 ) << 10 ) / (int) Temp1DegCPer5V ) + ( ( (int) Temp1Offset << 10 ) / 500 ) ) / 10 ) )
+  ( (unsigned short int) ( ( ( ( ( ( (long int) a - 320 ) * 5 / 9 ) << 10 ) / (long int) Temp1DegCPer5V ) + ( ( (long int) Temp1Offset << 10 ) / 500 ) ) / 10 ) )
 #define F10ToDigTemp2( a ) \
   /* Converts from signed integer Fahrenheit temperature times to to digital value */ \
   /* Returns the result as an unsigned short integer */ \
-  ( (unsigned short) ( ( ( ( ( ( (int) a - 320 ) * 5 / 9 ) << 10 ) / (int) Temp2DegCPer5V ) + ( ( (int) Temp2Offset << 10 ) / 500 ) ) / 10 ) )
+  ( (unsigned short int) ( ( ( ( ( ( (long int) a - 320 ) * 5 / 9 ) << 10 ) / (long int) Temp2DegCPer5V ) + ( ( (long int) Temp2Offset << 10 ) / 500 ) ) / 10 ) )
 #define C10toC( a ) \
   /* Converts from Celsius times 10 to Celsius */ \
   /* Returns the result as a signed short */ \
-  ( (short) ( a / 10 ) )
+  ( (short int) ( a / 10 ) )
 #define F10toC( a ) \
   /* Converts from Fahrenheit times 10 to Celsius */ \
   /* Returns the result as a signed short */ \
-  ( (short) ( ( (int) a - 320 ) * 5 / 90 ) )
+  ( (short int) ( ( (long int) a - 320 ) * 5 / 90 ) )
 
 /*******************************************************************************
  * GLOBAL FUNCTION DECLARATIONS

@@ -102,9 +102,9 @@ void setup ( void )
 
   /* Clear LCD screen and set to display default info screen */
   lcd.clear ( );                    // clear LCD screen and move cursor to start
-  lcd.print ( "T1:999.9T2:999.9" ); // Print temperature info on first line
+  lcd.print ( "C:   999.9 999.9" ); // Print temperature info on first line
   lcd.setCursor ( 0, 1 );           // set cursor to start of second line on LCD
-  lcd.print ( "N1:9999, N2:9999" ); // Print fan period info on second line
+  lcd.print ( "RPM:  9999  9999" ); // Print fan period info on second line
 
   return; // end of setup()
 }         // end of setup()
@@ -168,17 +168,17 @@ void loop ( void )
     lcdLoops = 0; // reset LCD loop counter
 
     /* Mark Run-time on first line of LCD display */
-// sprintf ( lcdBuff, "T1:%3hu.%huT2:%3hu.%hu",
-// DigTemp1ToC10 ( Temp1 ) / 10,
-// abs ( DigTemp1ToC10 ( Temp1 ) ) % 10,
-// DigTemp2ToC10 ( Temp2 ) / 10,
-// abs ( DigTemp2ToC10 ( Temp2 ) ) % 10 ); // set temperatures as first line
-    sprintf ( lcdBuff, "T1:%4hu, T2:%4hu", Temp1, Temp2 ); // set temperatures as first line
-    lcd.setCursor ( 0, 0 );                                // set cursor to start of first line on LCD
-    lcd.print ( lcdBuff );                                 // print first line
+    sprintf ( lcdBuff, " %cC: %3hu.%hu %3hu.%hu",
+      0xDF,
+      DigTemp1ToC10 ( Temp1 ) / 10,
+      abs ( DigTemp1ToC10 ( Temp1 ) ) % 10,
+      DigTemp2ToC10 ( Temp2 ) / 10,
+      abs ( DigTemp2ToC10 ( Temp2 ) ) % 10 ); // set temperatures as first line
+    lcd.setCursor ( 0, 0 );                   // set cursor to start of first line on LCD
+    lcd.print ( lcdBuff );                    // print first line
 
     /* Mark hall-sensor period values on second line of LCD display */
-    sprintf ( lcdBuff, "N1:%4hu, N2:%4hu", Fan1RPM, Fan2RPM ); // set fan speeds
+    sprintf ( lcdBuff, "RPM:  %4hu  %4hu", Fan1RPM, Fan2RPM ); // set fan speeds
     lcd.setCursor ( 0, 1 );                                    // set cursor to start of second line on LCD
     lcd.print ( lcdBuff );                                     // print second line
   }
