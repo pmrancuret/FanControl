@@ -28,10 +28,10 @@ volatile unsigned long lastEdgeTime2 = 0; // timestamp of previous edge of hall 
 /*******************************************************************************
  * EEPROM-STORED GLOBAL VARIABLE DEFAULT DEFINITIONS
  ******************************************************************************/
-short        Temp1Offset    = 500; // Offset of Temperature 1 measurement, mV at 0 degC
-short        Temp2Offset    = 500; // Offset of Temperature 2 measurement, mV at 0 degC
-int          Temp1DegCPer5V = 500; // Scale of temperature 1 measurement, in degrees celcius per 5 Volts
-int          Temp2DegCPer5V = 500; // Scale of temperature 2 measurement, in degrees celcius per 5 Volts
+short        Temp1Offset    = 0;   // Offset of Temperature 1 measurement, mV at 0 degC
+short        Temp2Offset    = 0;   // Offset of Temperature 2 measurement, mV at 0 degC
+int          Temp1DegCPer5V = 250; // Scale of temperature 1 measurement, in degrees celcius per 5 Volts
+int          Temp2DegCPer5V = 250; // Scale of temperature 2 measurement, in degrees celcius per 5 Volts
 unsigned int minRpm1        = 50;  // minimum speed measurement for fan 1
 unsigned int minRpm2        = 50;  // minimum speed measurement for fan 2
 
@@ -102,7 +102,7 @@ void setup ( void )
 
   /* Clear LCD screen and set to display default info screen */
   lcd.clear ( );                    // clear LCD screen and move cursor to start
-  lcd.print ( "C:   999.9 999.9" ); // Print temperature info on first line
+  lcd.print ( "  C: 999.9 999.9" ); // Print temperature info on first line
   lcd.setCursor ( 0, 1 );           // set cursor to start of second line on LCD
   lcd.print ( "RPM:  9999  9999" ); // Print fan period info on second line
 
