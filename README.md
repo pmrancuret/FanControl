@@ -83,13 +83,13 @@ Prices in table below are as of Aug 13, 2016.  If you are making this, you may c
 | LCD Screen | Xiamen Ocular | [GDM1602K] (https://www.sparkfun.com/products/709) | 1 | $15.95 | $15.95 |
 | Pushbutton | Sparkfun | [COM-09190] (https://www.sparkfun.com/products/9190) | 3 | $0.50 | $1.50 |
 | DC Power Jack | CUI Inc | [PJ-202A] (https://www.sparkfun.com/products/119) | 1 | $1.25 | $1.25 |
-| Temperature Sensor | Analog Devices | [TMP36] (https://www.sparkfun.com/products/10988) | 2 | $1.50 | $3.00 |
+| Temperature Sensor | Analog Devices | [TMP37] (http://www.digikey.com/product-detail/en/analog-devices-inc/TMP37FT9Z/TMP37FT9Z-ND/1217626) | 2 | $1.54 | $3.08 |
 | Female Break-Away Pin Headers | Sparkfun | [PRT-00115] (https://www.sparkfun.com/products/115) | 1 | $1.50 | $1.50 |
 | Male Break-Away Pin headers | Sparkfun | [PRT-00116] (https://www.sparkfun.com/products/116) | 1 | $1.50 | $1.50 |
 | 10kOhm, 1/6W, 5% Through-Hole Resistor | Sparkfun | [COM-11508] (https://www.sparkfun.com/products/11508) | 7 | NA | $0.95 |
 | 5.1Ohm, 1/4W, 5% Through-Hole Resistor | Yageo | [CFR-25JB-52-5R1] (https://www.digikey.com/product-detail/en/yageo/CFR-25JB-52-5R1/5.1QBK-ND/2238) | 6 | $0.10 | $0.60 |
 | 1kOhm, 1/6W, 5% Through-Hole Resistor | Yageo | [CFR-12JB-52-1K] (https://www.digikey.com/product-detail/en/yageo/CFR-12JB-52-1K/1.0KEBK-ND/4000) | 2 | $0.10 | $0.20 |
-| 10Ohm, 1/2W Potentiometer | Bourns Inc. | [3386P-1-100LF] (https://www.digikey.com/product-detail/en/bourns-inc/3386P-1-100LF/3386P-1-100LF-ND/2537193) | 1 | $1.60 | $1.60 |
+| 100Ohm, 1/2W Potentiometer | Bourns Inc. | [3362P-1-101LF] (https://www.digikey.com/product-detail/en/bourns-inc/3362P-1-101LF/3362P-101LF-ND/1088410) | 1 | $1.02 | $1.02 |
 | 10kOhm, 1/2W Potentiometer | Bourns Inc. | [3362P-1-103LF] (https://www.digikey.com/product-detail/en/bourns-inc/3362P-1-103LF/3362P-103LF-ND/1088412) | 1 | $1.02 | $1.02 |
 | 10uF, 25V Through-Hole Ceramic Capacitor | TDK Corporation | [FK16X7R1E106K] (https://www.digikey.com/product-detail/en/tdk-corporation/FK16X7R1E106K/445-8351-ND/2815281) | 7 | $0.63 | $4.41 |
 | 1.5mH, 540mA Through-Hole Inductor | Abracon LLC | [AIUR-06-152K] (https://www.digikey.com/product-detail/en/abracon-llc/AIUR-06-152K/AIUR-06-152K-ND/2343620) | 2 | $0.99 | $1.98 |
@@ -99,7 +99,7 @@ Prices in table below are as of Aug 13, 2016.  If you are making this, you may c
 | 5V output DC-DC Converter (2.5W) | Recom Power | [R-78E5.0-0.5] (https://www.digikey.com/product-detail/en/recom-power/R-78E5.0-0.5/945-1648-5-ND/2834904) | 1 | $2.84 | $2.84 |
 | Slide Switch | CW Industries | [GF-123-0054] (https://www.digikey.com/product-detail/en/cw-industries/GF-123-0054/CWI333-ND/4089770) | 2 | $0.93 | $1.86 |
 | 3-Pin fan connector | TE Connectivity | [640456-3] (https://www.digikey.com/product-detail/en/te-connectivity-amp-connectors/640456-3/A19470-ND/259010) | 2 | $0.13 | $0.26 |
-| Total Cost  | | | | | $208.18 |
+| Total Cost  | | | | | $207.68 |
 
 
 # <a name="operation"/>Operation Manual
