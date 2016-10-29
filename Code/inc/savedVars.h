@@ -20,7 +20,7 @@ extern "C" {
 /*******************************************************************************
  * MACRO DEFINITIONS
  ******************************************************************************/
-#define CODEVER         0x00000002 // software version code, checked in EEPROM for changes.  Change this value whenever making a new software version to re-load eeprom values.
+#define CODEVER         0x00000003 // software version code, checked in EEPROM for changes.  Change this value whenever making a new software version to re-load eeprom values.
 #define MAXN1           9999       // maximum fan 1 speed measurement (rpm)
 #define MAXN2           9999       // maximum fan 2 speed measurement (rpm)
 #define MINN1           50         // minimum fan 1 speed measurement (rpm)
@@ -39,13 +39,14 @@ extern "C" {
 #define SAVEDVARLIST \
   /* DO NOT CHANGE THE codeVer ENTRY OF THE TABLE BELOW */ \
   /*           varName,         sign,     type, min,        max,        default */ \
-  SAVEDVARDEF ( codeVer,        unsigned, long, 0x00000000, 0xFFFFFFFF, CODEVER ) \
-  SAVEDVARDEF ( Temp1Offset,    signed,   int,  -5000,      5000,       0 ) \
-  SAVEDVARDEF ( Temp2Offset,    signed,   int,  -5000,      5000,       0 ) \
-  SAVEDVARDEF ( Temp1DegCPer5V, signed,   int,  -5000,      5000,       250 ) \
-  SAVEDVARDEF ( Temp2DegCPer5V, signed,   int,  -5000,      5000,       250 ) \
-  SAVEDVARDEF ( minRpm1,        unsigned, int,  MINN1,      MAXN1,      300 ) \
-  SAVEDVARDEF ( minRpm2,        unsigned, int,  MINN2,      MAXN2,      300 )
+  SAVEDVARDEF ( codeVer,        unsigned, long, 0x00000000, 0xFFFFFFFF, CODEVER ) /* Code Version */\
+  SAVEDVARDEF ( Temp1Offset,    signed,   int,  -5000,      5000,       0 ) /* Offset in temperature 1 measurement, mV reading at 0 degC */\
+  SAVEDVARDEF ( Temp2Offset,    signed,   int,  -5000,      5000,       0 ) /* Offset in temperature 2 measurement, mV reading at 0 degC */\
+  SAVEDVARDEF ( Temp1DegCPer5V, signed,   int,  -5000,      5000,       250 ) /* Scale of temperature 1 measurement, degC per 5 V */\
+  SAVEDVARDEF ( Temp2DegCPer5V, signed,   int,  -5000,      5000,       250 ) /* Scale of temperature 2 measurement, degC per 5 V */\
+  SAVEDVARDEF ( minRpm1,        unsigned, int,  MINN1,      MAXN1,      300 ) /* minimum fan 1 speed setpoint, rpm */\
+  SAVEDVARDEF ( minRpm2,        unsigned, int,  MINN2,      MAXN2,      300 ) /* minimum fan 2 speed setpoint, rpm */\
+  SAVEDVARDEF ( useFtemp,       unsigned, int,  0,          1,          0 ) /* When high, temps are displayed in degF instead of degC */
 
 /*******************************************************************************
  * TYPE DEFINITION FOR TABLE OF SAVED VARIABLE INFO

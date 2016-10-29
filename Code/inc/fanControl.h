@@ -59,11 +59,11 @@
 #define DigTemp1ToF10( a ) \
   /* Converts from digital value to degrees Fahrenheit times 10 */ \
   /* Returns the result as an integer */ \
-  ( (int) ( ( ( ( (long int) a * 90 ) - ( ( ( (long int) Temp1Offset * 9 ) << 10 ) / 500 ) ) * (long int) Temp1DegCPer5V / 5 ) >> 10 ) )
+  ( (int) ( ( ( ( ( (long int) a * 90 ) - ( ( ( (long int) Temp1Offset * 9 ) << 10 ) / 500 ) ) * (long int) Temp1DegCPer5V / 5 ) >> 10 ) + 320 ) )
 #define DigTemp2ToF10( a ) \
   /* Converts from digital value to degrees Fahrenheit times 10 */ \
   /* Returns the result as an integer */ \
-  ( (int) ( ( ( ( (long int) a * 90 ) - ( ( ( (long int) Temp2Offset * 9 ) << 10 ) / 500 ) ) * (long int) Temp2DegCPer5V / 5 ) >> 10 ) )
+  ( (int) ( ( ( ( ( (long int) a * 90 ) - ( ( ( (long int) Temp2Offset * 9 ) << 10 ) / 500 ) ) * (long int) Temp2DegCPer5V / 5 ) >> 10 ) + 320 ) )
 #define C10ToDigTemp1( a ) \
   /* Converts from signed integer Celsius temperature times to to digital value */ \
   /* Returns the result as an unsigned integer */ \

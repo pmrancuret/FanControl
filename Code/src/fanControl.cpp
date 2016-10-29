@@ -51,7 +51,7 @@ void hall2ISR ( void ); // hall sensor 1 interrupt service routine
 void setup ( void )
 {
   /* Load all variables from EEPROM */
-  loadAllVars();
+  loadAllVars ( );
 
   /* Initialize the LCD Screen and print initialization message */
   lcd.begin ( LCDCOLS, LCDROWS );  // initialize LCD display (16 cols, 2 rows)
@@ -161,14 +161,26 @@ void loop ( void )
     lcdLoops = 0; // reset LCD loop counter
 
     /* Mark Run-time on first line of LCD display */
-    sprintf ( lcdBuff, " %cC: %3hu.%hu %3hu.%hu",
-      0xDF,
-      DigTemp1ToC10 ( Temp1 ) / 10,
-      abs ( DigTemp1ToC10 ( Temp1 ) ) % 10,
-      DigTemp2ToC10 ( Temp2 ) / 10,
-      abs ( DigTemp2ToC10 ( Temp2 ) ) % 10 ); // set temperatures as first line
-    lcd.setCursor ( 0, 0 );                   // set cursor to start of first line on LCD
-    lcd.print ( lcdBuff );                    // print first line
+    if ( useFtemp )
+    {
+      sprintf ( lcdBuff, " %cF: %3hu.%hu %3hu.%hu",
+        0xDF,
+        DigTemp1ToF10 ( Temp1 ) / 10,
+        abs ( DigTemp1ToF10 ( Temp1 ) ) % 10,
+        DigTemp2ToF10 ( Temp2 ) / 10,
+        abs ( DigTemp2ToF10 ( Temp2 ) ) % 10 ); // set temperatures as first line
+    }
+    else
+    {
+      sprintf ( lcdBuff, " %cC: %3hu.%hu %3hu.%hu",
+        0xDF,
+        DigTemp1ToC10 ( Temp1 ) / 10,
+        abs ( DigTemp1ToC10 ( Temp1 ) ) % 10,
+        DigTemp2ToC10 ( Temp2 ) / 10,
+        abs ( DigTemp2ToC10 ( Temp2 ) ) % 10 ); // set temperatures as first line
+    }
+    lcd.setCursor ( 0, 0 ); // set cursor to start of first line on LCD
+    lcd.print ( lcdBuff );  // print first line
 
     /* Mark hall-sensor period values on second line of LCD display */
     sprintf ( lcdBuff, "RPM:  %4hu  %4hu", Fan1RPM, Fan2RPM ); // set fan speeds
