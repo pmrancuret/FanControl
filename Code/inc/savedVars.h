@@ -20,7 +20,7 @@ extern "C" {
 /*******************************************************************************
  * MACRO DEFINITIONS
  ******************************************************************************/
-#define CODEVER         0x00000003 // software version code, checked in EEPROM for changes.  Change this value whenever making a new software version to re-load eeprom values.
+#define CODEVER         0x00000004 // software version code, checked in EEPROM for changes.  Change this value whenever making a new software version to re-load eeprom values.
 #define MAXN1           9999       // maximum fan 1 speed measurement (rpm)
 #define MAXN2           9999       // maximum fan 2 speed measurement (rpm)
 #define MINN1           50         // minimum fan 1 speed measurement (rpm)
@@ -39,14 +39,27 @@ extern "C" {
 #define SAVEDVARLIST \
   /* DO NOT CHANGE THE codeVer ENTRY OF THE TABLE BELOW */ \
   /*           varName,         sign,     type, min,        max,        default */ \
-  SAVEDVARDEF ( codeVer,        unsigned, long, 0x00000000, 0xFFFFFFFF, CODEVER ) /* Code Version */\
-  SAVEDVARDEF ( Temp1Offset,    signed,   int,  -5000,      5000,       0 ) /* Offset in temperature 1 measurement, mV reading at 0 degC */\
-  SAVEDVARDEF ( Temp2Offset,    signed,   int,  -5000,      5000,       0 ) /* Offset in temperature 2 measurement, mV reading at 0 degC */\
-  SAVEDVARDEF ( Temp1DegCPer5V, signed,   int,  -5000,      5000,       250 ) /* Scale of temperature 1 measurement, degC per 5 V */\
-  SAVEDVARDEF ( Temp2DegCPer5V, signed,   int,  -5000,      5000,       250 ) /* Scale of temperature 2 measurement, degC per 5 V */\
-  SAVEDVARDEF ( minRpm1,        unsigned, int,  MINN1,      MAXN1,      300 ) /* minimum fan 1 speed setpoint, rpm */\
-  SAVEDVARDEF ( minRpm2,        unsigned, int,  MINN2,      MAXN2,      300 ) /* minimum fan 2 speed setpoint, rpm */\
-  SAVEDVARDEF ( useFtemp,       unsigned, int,  0,          1,          0 ) /* When high, temps are displayed in degF instead of degC */
+  SAVEDVARDEF ( codeVer,        unsigned, long, 0x00000000, 0xFFFFFFFF, CODEVER ) /* Code Version */ \
+  SAVEDVARDEF ( Temp1Offset,    signed,   int,  -5000,      5000,       0 )       /* Offset in temperature 1 measurement, mV reading at 0 degC */ \
+  SAVEDVARDEF ( Temp2Offset,    signed,   int,  -5000,      5000,       0 )       /* Offset in temperature 2 measurement, mV reading at 0 degC */ \
+  SAVEDVARDEF ( Temp1DegCPer5V, signed,   int,  -5000,      5000,       250 )     /* Scale of temperature 1 measurement, degC per 5 V */ \
+  SAVEDVARDEF ( Temp2DegCPer5V, signed,   int,  -5000,      5000,       250 )     /* Scale of temperature 2 measurement, degC per 5 V */ \
+  SAVEDVARDEF ( minRpm1,        unsigned, int,  MINN1,      MAXN1,      650 )     /* minimum fan 1 speed setpoint, rpm */ \
+  SAVEDVARDEF ( minRpm2,        unsigned, int,  MINN2,      MAXN2,      650 )     /* minimum fan 2 speed setpoint, rpm */ \
+  SAVEDVARDEF ( maxRpm1,        unsigned, int,  MINN1,      MAXN1,      1100 )    /* minimum fan 1 speed setpoint, rpm */ \
+  SAVEDVARDEF ( maxRpm2,        unsigned, int,  MINN2,      MAXN2,      1100 )    /* minimum fan 2 speed setpoint, rpm */ \
+  SAVEDVARDEF ( useFtemp,       unsigned, int,  0,          1,          0 )       /* When high, temps are displayed in degF instead of degC */ \
+  SAVEDVARDEF ( pi1Kp,          signed,   int,  0,          32767,      5000 )    /* PI controller 1 proportional gain */ \
+  SAVEDVARDEF ( pi1Ki,          signed,   int,  0,          32767,      5000 )    /* PI controller 1 integral gain */ \
+  SAVEDVARDEF ( pi1Imax,        signed,   int,  0,          32767,      30000 )   /* PI controller 1 integrator max limit */ \
+  SAVEDVARDEF ( pi1Imin,        signed,   int,  -32768,     0,          -30000 )  /* PI controller 1 integrator min limit */ \
+  SAVEDVARDEF ( pi2Kp,          signed,   int,  0,          32767,      5000 )    /* PI controller 2 proportional gain */ \
+  SAVEDVARDEF ( pi2Ki,          signed,   int,  0,          32767,      5000 )    /* PI controller 2 integral gain */ \
+  SAVEDVARDEF ( pi2Imax,        signed,   int,  0,          32767,      30000 )   /* PI controller 2 integrator max limit */ \
+  SAVEDVARDEF ( pi2Imin,        signed,   int,  -32768,     0,          -30000 )  /* PI controller 2 integrator min limit */ \
+  SAVEDVARDEF ( fan1Filt,       unsigned, int,  0,          1023,       768 )     /* fan 1 speed filter gain, between 0 and 1023.  Larger value is slower filter response. */ \
+  SAVEDVARDEF ( fan2Filt,       unsigned, int,  0,          1023,       768 )     /* fan 2 speed filter gain, between 0 and 1023.  Larger value is slower filter response. */
+
 
 /*******************************************************************************
  * TYPE DEFINITION FOR TABLE OF SAVED VARIABLE INFO

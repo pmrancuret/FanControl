@@ -15,10 +15,15 @@
 #include "Arduino.h"
 #include "LiquidCrystal.h"
 #include "savedVars.h"
+#include "piController.h"
 
 /*******************************************************************************
  * GLOBALLY DEFINED MACROS
  ******************************************************************************/
+
+/* Debugging flags */
+// #define DEBUG_FANCTRL2
+
 /* General system operation definitions */
 #define BAUDRATE    9600  // baudrate used for serial comms
 #define LOOPTIME_US 50000 // number of microseconds between each loop iteration
@@ -101,10 +106,13 @@
  * GLOBAL VARIABLE DECLARATIONS
  ******************************************************************************/
 extern LiquidCrystal          lcd;           // lcd screen class object
+
 extern volatile unsigned long hall1Period;   // period count for hall sensor 1 (microseconds)
 extern volatile unsigned long hall2Period;   // period count for hall sensor 2 (microseconds)
 extern unsigned int           Fan1RPM;       // Fan 1 speed, in rpm
 extern unsigned int           Fan2RPM;       // Fan 2 speed, in rpm
+extern unsigned int           Fan1RPMRef;    // Fan 1 reference speed, in rpm
+extern unsigned int           Fan2RPMRef;    // Fan 2 reference speed, in rpm
 extern byte                   Pwm1Duty;      // PWM 1 duty cycle (0-255 maps to 0%-100%)
 extern byte                   Pwm2Duty;      // PWM 2 duty cycle (0-255 maps to 0%-100%)
 extern unsigned int           Temp1;         // Temperature 1 input, stored digitally (0-1023)

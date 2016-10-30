@@ -262,7 +262,7 @@ int saveVar ( void *varPtr ) // if the pointer matches one of the items in the t
       rtnCode |= checkVarRange ( varPtr, tblCnt ); // check variable range
 
       /* Write the data */
-      eeprom_write_block ( varPtr, (const void *) ( tblCnt * MAXVARSIZE ), savedVarsTbl [ tblCnt ].varSize );
+      eeprom_write_block ( varPtr, (void *) ( tblCnt * MAXVARSIZE ), savedVarsTbl [ tblCnt ].varSize );
 
       break; // exit the loop, since we already found the table item and loaded it
     }

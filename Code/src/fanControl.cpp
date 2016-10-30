@@ -7,17 +7,29 @@
  * GLOBAL VARIABLE DEFINITIONS
  ******************************************************************************/
 /* Define the 'lcd' object used for interfacing with LCD screen */
-LiquidCrystal lcd ( LCDRSPIN,             // set the RS pin
-  LCDRWPIN,                               // set the RW pin
-  LCDENABLEPIN,                           // set the Enable pin
-  LCDD0PIN,                               // set the data 0 pin
-  LCDD1PIN,                               // set the data 1 pin
-  LCDD2PIN,                               // set the data 2 pin
-  LCDD3PIN );                             // set the data 3 pin
+LiquidCrystal lcd ( LCDRSPIN, // set the RS pin
+  LCDRWPIN,                   // set the RW pin
+  LCDENABLEPIN,               // set the Enable pin
+  LCDD0PIN,                   // set the data 0 pin
+  LCDD1PIN,                   // set the data 1 pin
+  LCDD2PIN,                   // set the data 2 pin
+  LCDD3PIN );                 // set the data 3 pin
+piController pi1 ( LOOPTIME_US,
+  pi1Imax,
+  pi1Imin,
+  pi1Kp,
+  pi1Ki ); // PI controller #1 class object
+piController pi2 ( LOOPTIME_US,
+  pi2Imax,
+  pi2Imin,
+  pi2Kp,
+  pi2Ki );                                // PI controller #1 class object
 volatile unsigned long hall1Period   = 1; // period count for hall sensor 1
 volatile unsigned long hall2Period   = 1; // period count for hall sensor 2
 unsigned int           Fan1RPM       = 0; // Fan 1 speed, in rpm
 unsigned int           Fan2RPM       = 0; // Fan 2 speed, in rpm
+unsigned int           Fan1RPMRef    = 0; // Fan 1 reference speed, in rpm
+unsigned int           Fan2RPMRef    = 0; // Fan 2 reference speed, in rpm
 byte                   Pwm1Duty      = 0; // PWM 1 duty cycle (0-255 maps to 0%-100%)
 byte                   Pwm2Duty      = 0; // PWM 2 duty cycle (0-255 maps to 0%-100%)
 unsigned int           Temp1         = 0; // Temperature 1 input, stored digitally (0-1023)
@@ -118,9 +130,11 @@ void setup ( void )
 ******************************************************************************/
 void loop ( void )
 {
-  static byte          lcdLoops = 0; // number of loops run since last LCD update
-  static unsigned long loopsRun = 0; // total number of loops run
-  static unsigned long lastTime = 0; // time when last loop began (microseconds/64)
+  static byte          lcdLoops    = 0; // number of loops run since last LCD update
+  static unsigned long loopsRun    = 0; // total number of loops run
+  static unsigned long lastTime    = 0; // time when last loop began (microseconds/64)
+  static unsigned int  lastFan1RPM = 0; // last measured fan1 rpm
+  static unsigned int  lastFan2RPM = 0; // last measured fan2 rpm
 // unsigned long        runTime_s;             // program run-time (seconds)
   char                 lcdBuff [ LCDCOLS * LCDROWS ]; // buffer of chars used for LCD printing
   unsigned long        thisTime = micros ( );         // time now (in microseconds/64)
@@ -151,6 +165,12 @@ void loop ( void )
   if ( Fan2RPM > MAXN2 )                                                     // if RPM is too large
     Fan2RPM = MAXN2;                                                         // restrict to max value
 
+  /* Low-pass filter the measured fan speeds */
+  Fan1RPM     = (unsigned int) ( ( (unsigned long) lastFan1RPM * fan1Filt + (unsigned long) Fan1RPM * ( 1024 - fan1Filt ) ) >> 10 );
+  lastFan1RPM = Fan1RPM;
+  Fan2RPM     = (unsigned int) ( ( (unsigned long) lastFan2RPM * fan2Filt + (unsigned long) Fan2RPM * ( 1024 - fan2Filt ) ) >> 10 );
+  lastFan2RPM = Fan2RPM;
+
   /* Read temperature measurements */
   Temp1 = analogRead ( TEMP1PIN ); // read temp sensor 1
   Temp2 = analogRead ( TEMP2PIN ); // read temp sensor 2
@@ -160,7 +180,8 @@ void loop ( void )
   {
     lcdLoops = 0; // reset LCD loop counter
 
-    /* Mark Run-time on first line of LCD display */
+#ifndef DEBUG_FANCTRL2
+    /* Mark Temperature on first line of LCD display */
     if ( useFtemp )
     {
       sprintf ( lcdBuff, " %cF: %3hu.%hu %3hu.%hu",
@@ -186,6 +207,17 @@ void loop ( void )
     sprintf ( lcdBuff, "RPM:  %4hu  %4hu", Fan1RPM, Fan2RPM ); // set fan speeds
     lcd.setCursor ( 0, 1 );                                    // set cursor to start of second line on LCD
     lcd.print ( lcdBuff );                                     // print second line
+#else
+    /* First line has Int Term (quarter counts), Int State (tenths of error count times seconds), output duty (counts) */
+    sprintf ( lcdBuff, "%5d %6d %3u", pi2.getIntTerm ( ), pi2.getIntState ( ), Pwm2Duty ); // set fan info
+    lcd.setCursor ( 0, 0 );                                                                // set cursor to start of first line on LCD
+    lcd.print ( lcdBuff );                                                                 // print first line
+
+    /* Second line has Prop Term (quarter counts), Error (rpm), speed feedback (rpm) */
+    sprintf ( lcdBuff, "%5d %5d %4u", pi2.getPropTerm ( ), (int) Fan2RPMRef - Fan2RPM, Fan2RPM ); // set fan info
+    lcd.setCursor ( 0, 1 );                                                                       // set cursor to start of second line on LCD
+    lcd.print ( lcdBuff );                                                                        // print second line
+#endif
   }
 
   /* Read serial data if available, and echo it back */
@@ -194,9 +226,36 @@ void loop ( void )
     Serial.write ( Serial.read ( ) );
   }
 
-  /* Calculate required duty cycle */
-  Pwm1Duty = 0x00; // use constant duty for now
-  Pwm2Duty = 0x00; // use constant duty for now
+  /* set some dummy fan speed commands for now */
+  Fan1RPMRef = 650;
+  Fan2RPMRef = 1100;
+
+  /* make sure fan reference is within allowable range, and calculate duty */
+  if ( Fan1RPMRef < minRpm1 )
+  {
+    Fan1RPMRef = 0; // set speed command to zero
+    Pwm1Duty   = 0; // set output to zero
+  }
+  else if ( Fan1RPMRef > maxRpm1 )
+  {
+    Fan1RPMRef = maxRpm1;
+    Pwm1Duty   = pi1.piControl ( (int) Fan1RPMRef - Fan1RPM ); // use constant duty for now
+  }
+  else
+    Pwm1Duty = pi1.piControl ( (int) Fan1RPMRef - Fan1RPM ); // use constant duty for now
+  if ( Fan2RPMRef < minRpm2 )
+  {
+    Fan2RPMRef = 0; // set speed command to zero
+    Pwm2Duty   = 0; // set output to zero
+  }
+  else if ( Fan2RPMRef > maxRpm2 )
+  {
+    Fan2RPMRef = maxRpm2;
+    Pwm2Duty   = pi2.piControl ( (int) Fan2RPMRef - Fan2RPM ); // use constant duty for now
+  }
+  else
+    Pwm2Duty = pi2.piControl ( (int) Fan2RPMRef - Fan2RPM ); // use constant duty for now
+
 
   /* Set duty cycle for pwm outputs */
   analogWrite ( PWM1PIN, Pwm1Duty ); // set pwm1 duty
