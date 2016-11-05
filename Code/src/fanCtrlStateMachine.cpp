@@ -324,6 +324,7 @@ static FANCTRLSTATE_ENUM_TYPE debugPi1State ( FANCTRLSTATE_ENUM_TYPE thisState )
 
   /* Regulate Fan Speeds to Track Reference Values */
   regFanSpeeds ( );
+  Pwm2Duty = 0; // set output to zero
 
   return thisState; // remain in same state
 }                   // end of debugPi1State()
@@ -409,6 +410,7 @@ static FANCTRLSTATE_ENUM_TYPE debugPi2State ( FANCTRLSTATE_ENUM_TYPE thisState )
 
   /* Regulate Fan Speeds to Track Reference Values */
   regFanSpeeds ( );
+  Pwm1Duty = 0; // set output to zero
 
   return thisState; // remain in same state
 }                   // end of debugPi2State()
