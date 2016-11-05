@@ -28,10 +28,11 @@
 /*******************************************************************************
  * DEBUGGING DEFINITIONS
  ******************************************************************************/
-#define DEBUG_TIMEOUT     2400   // number of loops to remain in a given debug mode
+#define DEBUG_TIMEOUT     200    // number of loops to remain in a given debug mode
 #define DEBUGMSG_DATWORDS 8      // number of data words included in debug message payload
 #define DEBUGBUFFSIZE     48     // max buffer size for reading debug message
 #define DEBUGHEADSIZE     4      // number of bytes in header of debug message, which tells which debug mode to enter
+#define NORMAL_HEAD       "NRML" // keyword to use in header when returning to normal mode
 #define DEBUGPI1_HEAD     "DPI1" // keyword to use in header of debug message telling to enter DEBUG_PI1 mode
 #define DEBUGPI2_HEAD     "DPI2" // keyword to use in header of debug message telling to enter DEBUG_PI2 mode
 #define DEBUGBTN_HEAD     "DBTN" // keyword to use in header of debug message telling to enter DEBUG_BTNS mode

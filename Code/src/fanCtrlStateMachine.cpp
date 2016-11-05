@@ -66,7 +66,12 @@ static FANCTRLSTATE_ENUM_TYPE checkDebugMsgs ( FANCTRLSTATE_ENUM_TYPE thisState 
       memcpy ( msgHeader, readBuffer + cnt, DEBUGHEADSIZE ); // copy header from read buffer into header string buffer
 
       /* Compare header with valid headers to see if a valid debug mode was specified */
-      if ( strcmp ( msgHeader, DEBUGPI1_HEAD ) == 0 )
+      if ( strcmp ( msgHeader, NORMAL_HEAD ) == 0 )
+      {
+        nextState = NORMAL; // set next state to return to normal
+        break;              // exit loop, don't load debug message data
+      }
+      else if ( strcmp ( msgHeader, DEBUGPI1_HEAD ) == 0 )
         nextState = DEBUG_PI1; // set next state to requested debug state
       else if ( strcmp ( msgHeader, DEBUGPI2_HEAD ) == 0 )
         nextState = DEBUG_PI2; // set next state to requested debug state
