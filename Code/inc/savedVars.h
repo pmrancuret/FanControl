@@ -12,6 +12,7 @@
  * INCLUDED HEADER FILES
  ******************************************************************************/
 #include <stddef.h>
+#include "FanControlUtils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,18 +21,13 @@ extern "C" {
 /*******************************************************************************
  * MACRO DEFINITIONS
  ******************************************************************************/
-#define CODEVER         0x00000004 // software version code, checked in EEPROM for changes.  Change this value whenever making a new software version to re-load eeprom values.
-#define MAXN1           9999       // maximum fan 1 speed measurement (rpm)
-#define MAXN2           9999       // maximum fan 2 speed measurement (rpm)
-#define MINN1           50         // minimum fan 1 speed measurement (rpm)
-#define MINN2           50         // minimum fan 2 speed measurement (rpm)
-#define MAXVARSIZE      4          // maximum variable size allowed (bytes)
-#define EEPRMAXBYTES    1024       // maximum bytes stored in EEPROM
-#define SAVEVAR_SUCCESS 0          // value returned from save/load function success
-#define INVALID_VAR     1          // value returned when an invalid variable is specified
-#define INVALID_SIZE    2          // value returned when a variable is too big!  if this happens, increase MAXVARSIZE to allow it
-#define INVALID_ADDR    4          // value returned when a variable address outside the valid EEPROM address range
-#define SAVEDVAR_OOR    8          // value returned when a variabe to read/write was out of range. Clamps to range maximum if this happens.
+#define MAXVARSIZE      4    // maximum variable size allowed (bytes)
+#define EEPRMAXBYTES    1024 // maximum bytes stored in EEPROM
+#define SAVEVAR_SUCCESS 0    // value returned from save/load function success
+#define INVALID_VAR     1    // value returned when an invalid variable is specified
+#define INVALID_SIZE    2    // value returned when a variable is too big!  if this happens, increase MAXVARSIZE to allow it
+#define INVALID_ADDR    4    // value returned when a variable address outside the valid EEPROM address range
+#define SAVEDVAR_OOR    8    // value returned when a variabe to read/write was out of range. Clamps to range maximum if this happens.
 
 /*******************************************************************************
  * MACRO USED FOR DEFINING SAVED VARIABLE TABLE

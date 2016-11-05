@@ -8,7 +8,7 @@
 #ifndef PICONTROLLER_H_
 #define PICONTROLLER_H_
 
-#include "FanControl.h"
+#include "Arduino.h"
 
 /*******************************************************************************
  * MACRO DEFINITIONS
@@ -58,9 +58,5 @@ int  getPropTerm ( void );             // returns the proportional term.  good f
 int  getIntTerm ( void );              // returns the integral term.  good for debugging.
 int  getIntState ( void );             // returns the integrator state.  good for debugging.
 };
-
-
-extern piController pi1; // PI controller #1 class object
-extern piController pi2; // PI controller #2 class object
 
 #endif /* PICONTROLLER_H_ */
