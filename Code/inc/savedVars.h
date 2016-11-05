@@ -12,7 +12,7 @@
  * INCLUDED HEADER FILES
  ******************************************************************************/
 #include <stddef.h>
-#include "FanControlUtils.h"
+#include "fanControlUtils.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -13,7 +13,7 @@
  * GLOBALLY INCLUDED HEADER FILES
  ******************************************************************************/
 #include "Arduino.h"
-#include "FanControlUtils.h"
+#include "fanControlUtils.h"
 #include "LiquidCrystal.h"
 #include "savedVars.h"
 #include "fanCtrlStateMachine.h"
