@@ -56,6 +56,11 @@ static FANCTRLSTATE_ENUM_TYPE initState ( FANCTRLSTATE_ENUM_TYPE lastState )
   }
   Serial.print ( "INITIALIZING...\n" ); // write initializing message on serial
 
+  /* Configure Button Pins as Inputs */
+  pinMode ( BTN1PIN, INPUT ); // button 1 is an input
+  pinMode ( BTN2PIN, INPUT ); // button 2 is an input
+  pinMode ( BTN3PIN, INPUT ); // button 3 is an input
+
   /* Configure PWM pins and start with low output */
   digitalWrite ( PWM1PIN, LOW ); // start with pwm1 pin low
   digitalWrite ( PWM2PIN, LOW ); // start with pwm2 pin low
@@ -163,6 +168,12 @@ static FANCTRLSTATE_ENUM_TYPE normalState ( FANCTRLSTATE_ENUM_TYPE lastState )
     Serial.write ( Serial.read ( ) );
   }
 
+  /* Set desired fan speeds based on temperature */
+  setRefFanSpeeds ( );
+
+  /* Regulate Fan Speeds to Track Reference Values */
+  regFanSpeeds ( );
+
   return nextState;
 } // end of normalState()
 
@@ -203,6 +214,29 @@ FANCTRLSTATE_ENUM_TYPE fanCtrlStateMachine :: getState ( void )
   return state; // returns the state machine state
 }               // end of getState
 
+
+/******************************************************************************
+* Function:
+*   reset()
+*
+* Description:
+*   reset the state machine state to initialization, and runs initialization
+*
+* Arguments:
+*   none
+*
+* Returns:
+*   none
+******************************************************************************/
+void fanCtrlStateMachine :: reset ( void )
+{
+  state = INIT; // set state to initialize
+  run ( );      // runs initialization state step
+
+  return;
+} // end of reset()
+
+
 /******************************************************************************
 * Function:
 *   run()
@@ -221,15 +255,15 @@ void fanCtrlStateMachine :: run ( void )
   switch ( state )
   {
   case INIT:
-    state = initState ( state );  // initialize system then set next state
+    state = initState ( state ); // initialize system then set next state
     break;
 
   case NORMAL:
-    state = normalState ( state );  // run normal state then move on to next state
+    state = normalState ( state ); // run normal state then move on to next state
     break;
 
   default:
-    state = NORMAL;   // go to normal state
+    reset ( ); // reset device, invalid state reached
   }
   return;
 } // end of run

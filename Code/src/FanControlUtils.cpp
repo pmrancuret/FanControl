@@ -42,6 +42,11 @@ byte                   Pwm1Duty      = 0; // PWM 1 duty cycle (0-255 maps to 0%-
 byte                   Pwm2Duty      = 0; // PWM 2 duty cycle (0-255 maps to 0%-100%)
 unsigned int           Temp1         = 0; // Temperature 1 input, stored digitally (0-1023)
 unsigned int           Temp2         = 0; // Temperature 2 input, stored digitally (0-1023)
+unsigned long          loopsRun      = 0; // total number of loops run since reset
+unsigned long          runTime_s     = 0; // program run-time since reset (seconds)
+unsigned int           btn1PressCnt  = 0; // number of consecutive times button 1 was pressed
+unsigned int           btn2PressCnt  = 0; // number of consecutive times button 1 was pressed
+unsigned int           btn3PressCnt  = 0; // number of consecutive times button 1 was pressed
 
 /******************************************************************************
 * Function:
@@ -84,6 +89,44 @@ void measFanSpeeds ( unsigned long thisTime )
   lastFan2RPM = Fan2RPM;
   return;
 } // end of measFanSpeeds()
+
+
+/******************************************************************************
+* Function:
+*   checkButtonPress()
+*
+* Description:
+*   checks if buttons were pressed, and updates consecutive press count
+*
+* Arguments:
+*   none
+*
+* Returns:
+*   none
+******************************************************************************/
+void checkButtonPress ( void )
+{
+
+  /* Check Button 1 */
+  if ( digitalRead ( BTN1PIN ) ) // if button 1 input pin is high
+    btn1PressCnt++;              // increase button press count (don't prevent overflow)
+  else                           // if button 1 input pin is low
+    btn1PressCnt = 0;            // set button press count to zero
+
+  /* Check Button 2 */
+  if ( digitalRead ( BTN2PIN ) ) // if button 2 input pin is high
+    btn2PressCnt++;              // increase button press count (don't prevent overflow)
+  else                           // if button 2 input pin is low
+    btn2PressCnt = 0;            // set button press count to zero
+
+  /* Check Button 3 */
+  if ( digitalRead ( BTN3PIN ) ) // if button 3 input pin is high
+    btn3PressCnt++;              // increase button press count (don't prevent overflow)
+  else                           // if button 3 input pin is low
+    btn3PressCnt = 0;            // set button press count to zero
+
+  return;
+} // end of checkButtonPress()
 
 
 /******************************************************************************
@@ -149,11 +192,6 @@ void regFanSpeeds ( void )
   }
   else
     Pwm2Duty = pi2.piControl ( (int) Fan2RPMRef - Fan2RPM ); // use constant duty for now
-
-
-  /* Set duty cycle for pwm outputs */
-  analogWrite ( PWM1PIN, Pwm1Duty ); // set pwm1 duty
-  analogWrite ( PWM2PIN, Pwm2Duty ); // set pwm2 duty
 
   return;
 } // end of regFanSpeeds()

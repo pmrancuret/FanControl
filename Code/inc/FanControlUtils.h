@@ -58,7 +58,10 @@
 #define TEMP1PIN 0 // Arduino analog pin used for temp sensor 1
 #define TEMP2PIN 1 // Arduino analog pin used for temp sensor 2
 
-
+/* Button pin definitions */
+#define BTN1PIN 4  // Arduino digital pin used for reading button 1
+#define BTN2PIN A2 // Arduino digital pin used for reading button 1
+#define BTN3PIN A3 // Arduino digital pin used for reading button 1
 
 /*******************************************************************************
  * USEFUL MACROS FOR TEMPERATURE CONVERSION
@@ -119,12 +122,18 @@ extern byte                   Pwm1Duty;      // PWM 1 duty cycle (0-255 maps to 
 extern byte                   Pwm2Duty;      // PWM 2 duty cycle (0-255 maps to 0%-100%)
 extern unsigned int           Temp1;         // Temperature 1 input, stored digitally (0-1023)
 extern unsigned int           Temp2;         // Temperature 2 input, stored digitally (0-1023)
+extern unsigned long          loopsRun;      // total number of loops run since reset
+extern unsigned long          runTime_s;     // program run-time since reset (seconds)
+extern unsigned int           btn1PressCnt;  // number of consecutive times button 1 was pressed
+extern unsigned int           btn2PressCnt;  // number of consecutive times button 1 was pressed
+extern unsigned int           btn3PressCnt;  // number of consecutive times button 1 was pressed
 
 /*******************************************************************************
  * FUNCTION DECLARATIONS
  ******************************************************************************/
 void initializeSystem ( void );                // initializes the fan control system
 void measFanSpeeds ( unsigned long thisTime ); // Calculates fan speeds, in RPM
+void checkButtonPress ( void );                // checks if buttons were pressed, and updates consecutive press count
 void setRefFanSpeeds ( void );                 // sets reference fan speeds to track desired temperature
 void regFanSpeeds ( void );                    // regulates fan speeds to reference values
 void hall1ISR ( void );                        // hall sensor 1 interrupt service routine

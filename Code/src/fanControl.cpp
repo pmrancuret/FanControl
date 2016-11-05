@@ -24,8 +24,8 @@ fanCtrlStateMachine stateMachine; // define the state machine
 ******************************************************************************/
 void setup ( void )
 {
-  /* Run state machine for first time, which will initialize the system */
-  stateMachine.run ( );
+  /* Reset state machine, which will initialize the system */
+  stateMachine.reset ( );
 
   return; // end of setup()
 }         // end of setup()
@@ -46,10 +46,8 @@ void setup ( void )
 ******************************************************************************/
 void loop ( void )
 {
-  static unsigned long loopsRun = 0; // total number of loops run
-  static unsigned long lastTime = 0; // time when last loop began (microseconds/64)
-// unsigned long        runTime_s;             // program run-time (seconds)
-  unsigned long        thisTime = micros ( );         // time now (in microseconds/64)
+  static unsigned long lastTime = 0;          // time when last loop began (microseconds/64)
+  unsigned long        thisTime = micros ( ); // time now (in microseconds/64)
 
   /* Check to see if it is time to run a new loop, otherwise return */
   if ( thisTime - lastTime >= LOOPTIME_US * 64 ) // enough time elapsed for new loop
@@ -58,8 +56,8 @@ void loop ( void )
     return; // skip this loop iteration
 
   /* keep track of total program run time */
-// runTime_s = loopsRun * LOOPTIME_US / 1000000; // track runtime in seconds
-  loopsRun++; // increment count of loops run
+  runTime_s = loopsRun * LOOPTIME_US / 1000000; // track runtime in seconds
+  loopsRun++;                                   // increment count of loops run
 
   /* Calculate Fan speeds in RPM */
   measFanSpeeds ( thisTime );
@@ -68,14 +66,15 @@ void loop ( void )
   Temp1 = analogRead ( TEMP1PIN ); // read temp sensor 1
   Temp2 = analogRead ( TEMP2PIN ); // read temp sensor 2
 
+  /* Check for button clicks and update consecutive button press count */
+  checkButtonPress ( );
+
   /* Run state machine */
   stateMachine.run ( );
 
-  /* Set desired fan speeds based on temperature */
-  setRefFanSpeeds ( );
-
-  /* Regulate Fan Speeds to Track Reference Values */
-  regFanSpeeds ( );
+  /* Set duty cycle for pwm outputs */
+  analogWrite ( PWM1PIN, Pwm1Duty ); // set pwm1 duty
+  analogWrite ( PWM2PIN, Pwm2Duty ); // set pwm2 duty
 
   return; // end of loop()
 }         // end of loop()

@@ -28,11 +28,12 @@ typedef enum FANCTRLSTATE_ENUM
 class fanCtrlStateMachine
 {
 private:
-FANCTRLSTATE_ENUM_TYPE state;   // fan control state
+FANCTRLSTATE_ENUM_TYPE state; // fan control state
 
 public:
 fanCtrlStateMachine ( void );             // constructor for fanCtrlStateMachine
 FANCTRLSTATE_ENUM_TYPE getState ( void ); // returns the state machine state
+void                   reset ( void );    // resets state machine to run initialization
 void                   run ( void );      // runs the state machine
 
 };
