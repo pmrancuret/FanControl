@@ -36,6 +36,7 @@
 #define DEBUGPI1_HEAD     "DPI1" // keyword to use in header of debug message telling to enter DEBUG_PI1 mode
 #define DEBUGPI2_HEAD     "DPI2" // keyword to use in header of debug message telling to enter DEBUG_PI2 mode
 #define DEBUGBTN_HEAD     "DBTN" // keyword to use in header of debug message telling to enter DEBUG_BTNS mode
+#define DEBUGTMP_HEAD     "DTMP" // keyword to use in header of debug message telling to enter DEBUG_TMP mode
 
 /*******************************************************************************
  * DEFINITIONS FOR PERIPHERAL USE
@@ -140,8 +141,8 @@ extern byte                   stateChange;                         // high when 
 extern unsigned int           btn1PressCnt;                        // number of consecutive times button 1 was pressed
 extern unsigned int           btn2PressCnt;                        // number of consecutive times button 1 was pressed
 extern unsigned int           btn3PressCnt;                        // number of consecutive times button 1 was pressed
-extern int                    debugDatWords [ DEBUGMSG_DATWORDS ]; // buffer of data words included in payload of debug messages
 extern byte                   lcdLoops;                            // number of loops run since last LCD update
+extern int                    debugDatWords [ DEBUGMSG_DATWORDS ]; // buffer of data words included in payload of debug messages
 
 /*******************************************************************************
  * FUNCTION DECLARATIONS

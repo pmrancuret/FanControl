@@ -56,8 +56,8 @@ byte                   stateChange                         = 0;     // high when
 unsigned int           btn1PressCnt                        = 0;     // number of consecutive times button 1 was pressed
 unsigned int           btn2PressCnt                        = 0;     // number of consecutive times button 1 was pressed
 unsigned int           btn3PressCnt                        = 0;     // number of consecutive times button 1 was pressed
+byte                   lcdLoops                            = 0;     // number of loops run since last LCD update
 int                    debugDatWords [ DEBUGMSG_DATWORDS ] = { 0 }; // buffer of data words included in payload of debug messages
-extern byte            lcdLoops = 0;                                // number of loops run since last LCD update
 
 /******************************************************************************
 * Function:

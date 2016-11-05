@@ -77,6 +77,8 @@ static FANCTRLSTATE_ENUM_TYPE checkDebugMsgs ( FANCTRLSTATE_ENUM_TYPE thisState 
         nextState = DEBUG_PI2; // set next state to requested debug state
       else if ( strcmp ( msgHeader, DEBUGBTN_HEAD ) == 0 )
         nextState = DEBUG_BTNS; // set next state to requested debug state
+      else if ( strcmp ( msgHeader, DEBUGTMP_HEAD ) == 0 )
+        nextState = DEBUG_TMP; // set next state to requested debug state
       else
         continue; // did not find valid message, skip to next buffer value
 
@@ -91,7 +93,8 @@ static FANCTRLSTATE_ENUM_TYPE checkDebugMsgs ( FANCTRLSTATE_ENUM_TYPE thisState 
   /* Check number of consecutive debug loops, and exit to normal mode if timeout occurred */
   if ( nextState == DEBUG_PI1 ||
     nextState == DEBUG_PI2 ||
-    nextState == DEBUG_BTNS ) // if we are in (or entering) debug state
+    nextState == DEBUG_BTNS ||
+    nextState == DEBUG_TMP ) // if we are in (or entering) debug state
   {
     if ( numDebugLoops++ >= DEBUG_TIMEOUT ) // increment count of debug loops, and check for timeout
     {
@@ -489,6 +492,98 @@ static FANCTRLSTATE_ENUM_TYPE debugBtnState ( FANCTRLSTATE_ENUM_TYPE thisState )
   return thisState; // remain in same state
 }                   // end of debugBtnState()
 
+
+/******************************************************************************
+* Function:
+*   debugTmpState()
+*
+* Description:
+*   Runs the DEBUG_TMP state routine
+*
+* Arguments:
+*   none
+*
+* Returns:
+*   nextState - state to enter upon exiting this function
+******************************************************************************/
+static FANCTRLSTATE_ENUM_TYPE debugTmpState ( FANCTRLSTATE_ENUM_TYPE thisState )
+{
+  char lcdBuff [ LCDCOLS * LCDROWS ]; // buffer of chars used for LCD printing
+
+  /* If this is the first time entering this state, reset button edge counts */
+  if ( stateChange )
+  {
+    Serial.print ( "ENTERING DEBUG TEMP SENSORS STATE\n" ); // write initializing message on serial
+  }
+
+  /* Update Temp Sensor Parameters with those specified in message (if different) */
+  if ( useFtemp != *(unsigned int *) ( debugDatWords + 0 ) ) // first word is whether or not to use fahrenheit units
+  {
+    useFtemp = *(unsigned int *) ( debugDatWords + 0 );
+    saveVar ( &useFtemp );
+  }
+  if ( Temp1Offset != debugDatWords [ 1 ] ) // second word is offset for temp sensor 1
+  {
+    Temp1Offset = debugDatWords [ 1 ];
+    saveVar ( &Temp1Offset );
+  }
+  if ( Temp1DegCPer5V != debugDatWords [ 2 ] ) // third word is gain for temp sensor 1
+  {
+    Temp1DegCPer5V = debugDatWords [ 2 ];
+    saveVar ( &Temp1DegCPer5V );
+  }
+  if ( Temp2Offset != debugDatWords [ 3 ] ) // fourth word is offset for temp sensor 2
+  {
+    Temp2Offset = debugDatWords [ 3 ];
+    saveVar ( &Temp2Offset );
+  }
+  if ( Temp2DegCPer5V != debugDatWords [ 4 ] ) // fifth word is gain for temp sensor 2
+  {
+    Temp2DegCPer5V = debugDatWords [ 4 ];
+    saveVar ( &Temp2DegCPer5V );
+  }
+
+  /* Update LCD if needed */
+  if ( ++lcdLoops >= LCD_DEC || stateChange ) // if enough loops have occured or if this is first instance of NORMAL state, update LCD
+  {
+    lcdLoops = 0; // reset LCD loop counter
+
+    /* Mark Temperature on first line of LCD display */
+    if ( useFtemp )
+    {
+      sprintf ( lcdBuff, " %cF: %3hu.%hu %3hu.%hu",
+        0xDF,
+        DigTemp1ToF10 ( Temp1 ) / 10,
+        abs ( DigTemp1ToF10 ( Temp1 ) ) % 10,
+        DigTemp2ToF10 ( Temp2 ) / 10,
+        abs ( DigTemp2ToF10 ( Temp2 ) ) % 10 ); // set temperatures as first line
+    }
+    else
+    {
+      sprintf ( lcdBuff, " %cC: %3hu.%hu %3hu.%hu",
+        0xDF,
+        DigTemp1ToC10 ( Temp1 ) / 10,
+        abs ( DigTemp1ToC10 ( Temp1 ) ) % 10,
+        DigTemp2ToC10 ( Temp2 ) / 10,
+        abs ( DigTemp2ToC10 ( Temp2 ) ) % 10 ); // set temperatures as first line
+    }
+    lcd.setCursor ( 0, 0 ); // set cursor to start of first line on LCD
+    lcd.print ( lcdBuff );  // print first line
+
+    /* Second line has raw temp readings */
+    sprintf ( lcdBuff, "Raw: %5u %5u", Temp1, Temp2 ); // set raw temp info
+    lcd.setCursor ( 0, 1 );                            // set cursor to start of second line on LCD
+    lcd.print ( lcdBuff );
+
+  }
+
+  /* Turn off fans */
+  Pwm1Duty = 0; // set output to zero
+  Pwm2Duty = 0; // set output to zero
+
+  return thisState; // remain in same state
+}                   // end of debugTmpState()
+
 /******************************************************************************
 * Function:
 *   fanCtrlStateMachine()
@@ -585,8 +680,13 @@ void fanCtrlStateMachine :: run ( void )
     break;
 
   case DEBUG_BTNS:
-    state = debugBtnState ( thisState ); // run debug button  state then move on to next state
+    state = debugBtnState ( thisState ); // run debug button state then move on to next state
     break;
+
+  case DEBUG_TMP:
+    state = debugTmpState ( thisState ); // run debug temp sensor state then move on to next state
+    break;
+
 
   default:
     reset ( ); // reset device, invalid state reached
