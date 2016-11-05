@@ -458,7 +458,7 @@ static FANCTRLSTATE_ENUM_TYPE debugBtnState ( FANCTRLSTATE_ENUM_TYPE thisState )
     lcd.print ( lcdBuff );                                                    // print first line
 
     /* Second line has button consecutive counts */
-    sprintf ( lcdBuff, "%  4u %4u %4u", btn1PressCnt, btn2PressCnt, btn3PressCnt ); // set button info
+    sprintf ( lcdBuff, "  %4u %4u %4u", btn1PressCnt, btn2PressCnt, btn3PressCnt ); // set button info
     lcd.setCursor ( 0, 1 );                                                         // set cursor to start of second line on LCD
     lcd.print ( lcdBuff );
 

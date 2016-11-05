@@ -28,7 +28,7 @@
 /*******************************************************************************
  * DEBUGGING DEFINITIONS
  ******************************************************************************/
-#define DEBUG_TIMEOUT     200    // number of loops to remain in a given debug mode
+#define DEBUG_TIMEOUT     2400   // number of loops to remain in a given debug mode
 #define DEBUGMSG_DATWORDS 8      // number of data words included in debug message payload
 #define DEBUGBUFFSIZE     48     // max buffer size for reading debug message
 #define DEBUGHEADSIZE     4      // number of bytes in header of debug message, which tells which debug mode to enter
