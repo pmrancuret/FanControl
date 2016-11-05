@@ -301,26 +301,32 @@ static FANCTRLSTATE_ENUM_TYPE debugPi1State ( FANCTRLSTATE_ENUM_TYPE thisState )
     pi1Ki = debugDatWords [ 2 ];
     saveVar ( &pi1Ki );
   }
-  if ( pi1Ki != debugDatWords [ 3 ] ) // fourth word is Ki
+  if ( pi1Imax != debugDatWords [ 3 ] ) // fourth word is Imax
   {
-    pi1Ki = debugDatWords [ 3 ];
-    saveVar ( &pi1Ki );
-  }
-  if ( pi1Imax != debugDatWords [ 4 ] ) // fifth word is Imax
-  {
-    pi1Imax = debugDatWords [ 4 ];
+    pi1Imax = debugDatWords [ 3 ];
     saveVar ( &pi1Imax );
   }
-  if ( pi1Imin != debugDatWords [ 5 ] ) // sixth word is Imin
+  if ( pi1Imin != debugDatWords [ 4 ] ) // fifth word is Imin
   {
-    pi1Imin = debugDatWords [ 5 ];
+    pi1Imin = debugDatWords [ 4 ];
     saveVar ( &pi1Imin );
   }
-  if ( fan1Filt != *(unsigned int *) ( debugDatWords + 6 ) ) // seventh word is Filt gain
+  if ( fan1Filt != *(unsigned int *) ( debugDatWords + 5 ) ) // sixth word is Filt gain
   {
-    fan1Filt = *(unsigned int *) ( debugDatWords + 6 );
+    fan1Filt = *(unsigned int *) ( debugDatWords + 5 );
     saveVar ( &fan1Filt );
   }
+  if ( minRpm1 != *(unsigned int *) ( debugDatWords + 6 ) ) // seventh word is min rpm setting
+  {
+    minRpm1 = *(unsigned int *) ( debugDatWords + 6 );
+    saveVar ( &minRpm1 );
+  }
+  if ( maxRpm1 != *(unsigned int *) ( debugDatWords + 7 ) ) // eighth word is max rpm setting
+  {
+    maxRpm1 = *(unsigned int *) ( debugDatWords + 7 );
+    saveVar ( &maxRpm1 );
+  }
+
 
   /* Regulate Fan Speeds to Track Reference Values */
   regFanSpeeds ( );
@@ -387,25 +393,30 @@ static FANCTRLSTATE_ENUM_TYPE debugPi2State ( FANCTRLSTATE_ENUM_TYPE thisState )
     pi2Ki = debugDatWords [ 2 ];
     saveVar ( &pi2Ki );
   }
-  if ( pi2Ki != debugDatWords [ 3 ] ) // fourth word is Ki
+  if ( pi2Imax != debugDatWords [ 3 ] ) // fourth word is Imax
   {
-    pi2Ki = debugDatWords [ 3 ];
-    saveVar ( &pi2Ki );
-  }
-  if ( pi2Imax != debugDatWords [ 4 ] ) // fifth word is Imax
-  {
-    pi2Imax = debugDatWords [ 4 ];
+    pi2Imax = debugDatWords [ 3 ];
     saveVar ( &pi2Imax );
   }
-  if ( pi2Imin != debugDatWords [ 5 ] ) // sixth word is Imin
+  if ( pi2Imin != debugDatWords [ 4 ] ) // fifth word is Imin
   {
-    pi2Imin = debugDatWords [ 5 ];
+    pi2Imin = debugDatWords [ 4 ];
     saveVar ( &pi2Imin );
   }
-  if ( fan2Filt != *(unsigned int *) ( debugDatWords + 6 ) ) // seventh word is Filt gain
+  if ( fan2Filt != *(unsigned int *) ( debugDatWords + 5 ) ) // sixth word is Filt gain
   {
-    fan2Filt = *(unsigned int *) ( debugDatWords + 6 );
+    fan2Filt = *(unsigned int *) ( debugDatWords + 5 );
     saveVar ( &fan2Filt );
+  }
+  if ( minRpm2 != *(unsigned int *) ( debugDatWords + 6 ) ) // seventh word is min rpm setting
+  {
+    minRpm2 = *(unsigned int *) ( debugDatWords + 6 );
+    saveVar ( &minRpm2 );
+  }
+  if ( maxRpm2 != *(unsigned int *) ( debugDatWords + 7 ) ) // eighth word is max rpm setting
+  {
+    maxRpm2 = *(unsigned int *) ( debugDatWords + 7 );
+    saveVar ( &maxRpm2 );
   }
 
   /* Regulate Fan Speeds to Track Reference Values */
