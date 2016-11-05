@@ -10,21 +10,93 @@
 #include "FanControlUtils.h"
 #include "LiquidCrystal.h"
 #include "savedVars.h"
+#include "piController.h"
 
-
-/* Define the 'lcd' object used for interfacing with LCD screen */
-LiquidCrystal lcd ( LCDRSPIN, // set the RS pin
-  LCDRWPIN,                   // set the RW pin
-  LCDENABLEPIN,               // set the Enable pin
-  LCDD0PIN,                   // set the data 0 pin
-  LCDD1PIN,                   // set the data 1 pin
-  LCDD2PIN,                   // set the data 2 pin
-  LCDD3PIN );                 // set the data 3 pin
-
+/* Declare the class objects, which are defined elsewhere */
+extern LiquidCrystal lcd;
+extern piController  pi1;
+extern piController  pi2;
 
 /*******************************************************************************
  * FUNCTION DEFINITIONS
  ******************************************************************************/
+
+/******************************************************************************
+* Function:
+*   checkDebugMsgs()
+*
+* Description:
+*   Checks serial input for commands to enter a debug mode.  If no message is
+*   received, and there is no debug timeout, it will remain in same state.  If
+*   already in debug mode, and a debug timeout occurs, it will return to normal
+*   state.
+*
+* Arguments:
+*   none
+*
+* Returns:
+*   nextState - state to enter on next loop.
+******************************************************************************/
+static FANCTRLSTATE_ENUM_TYPE checkDebugMsgs ( FANCTRLSTATE_ENUM_TYPE thisState )
+{
+  FANCTRLSTATE_ENUM_TYPE nextState = thisState;                   // By default, remain in same state
+  int                    cnt;                                     // count variable used for loop
+  byte                   readBuffer [ DEBUGBUFFSIZE ];            // buffer for storing serial input
+  int                    serialBytesAvail = Serial.available ( ); // number of bytes available to read
+  int                    bytesRead;                               // number of bytes read
+  static int             numDebugLoops;                           // number of consecutive loops in same debug mode without getting new message
+  char                   msgHeader [ DEBUGHEADSIZE + 1 ];         // string containing message header read
+
+  /* Make sure we don't read more bytes than our buffer can store */
+  if ( serialBytesAvail > DEBUGBUFFSIZE )
+    serialBytesAvail = DEBUGBUFFSIZE;
+
+  /* Put terminator character at end of header buffer */
+  msgHeader [ DEBUGHEADSIZE ] = '\0';
+
+  /* Read serial data if enough bytes are available */
+  if ( serialBytesAvail >= ( DEBUGMSG_DATWORDS * 2 + DEBUGHEADSIZE ) )
+  {
+    bytesRead = Serial.readBytes ( readBuffer, serialBytesAvail ); // read until all data is read, or buffer is full
+
+    for ( cnt = 0;
+      cnt <= ( bytesRead - ( DEBUGMSG_DATWORDS * 2 + DEBUGHEADSIZE ) );
+      cnt++ ) // loop through each character of buffer which could potentially be the start of a debug message command.  Must have sufficient bytes to the right.
+    {
+      memcpy ( msgHeader, readBuffer + cnt, DEBUGHEADSIZE ); // copy header from read buffer into header string buffer
+
+      /* Compare header with valid headers to see if a valid debug mode was specified */
+      if ( strcmp ( msgHeader, DEBUGPI1_HEAD ) == 0 )
+        nextState = DEBUG_PI1; // set next state to requested debug state
+      else if ( strcmp ( msgHeader, DEBUGPI2_HEAD ) == 0 )
+        nextState = DEBUG_PI2; // set next state to requested debug state
+      else if ( strcmp ( msgHeader, DEBUGBTN_HEAD ) == 0 )
+        nextState = DEBUG_BTNS; // set next state to requested debug state
+      else
+        continue; // did not find valid message, skip to next buffer value
+
+      /* If we made it to this point, a valid debug message was found */
+      memcpy ( debugDatWords, readBuffer + cnt + DEBUGHEADSIZE, DEBUGMSG_DATWORDS * 2 ); // copy data payload into debug words buffer
+      numDebugLoops = 0;                                                                 // reset counter of consecutive debug loops without getting new message
+
+      break; // exit loop, since we found the valid message
+    }
+  }
+
+  /* Check number of consecutive debug loops, and exit to normal mode if timeout occurred */
+  if ( nextState == DEBUG_PI1 ||
+    nextState == DEBUG_PI2 ||
+    nextState == DEBUG_BTNS ) // if we are in (or entering) debug state
+  {
+    if ( numDebugLoops++ >= DEBUG_TIMEOUT ) // increment count of debug loops, and check for timeout
+    {
+      numDebugLoops = 0;      // reset debug loop counter
+      nextState     = NORMAL; // exit debug mode, go back to normal state
+    }
+  }
+
+  return nextState;
+} // end of checkDebugMsgs();
 
 /******************************************************************************
 * Function:
@@ -39,7 +111,7 @@ LiquidCrystal lcd ( LCDRSPIN, // set the RS pin
 * Returns:
 *   nextState - state to enter upon exiting this function
 ******************************************************************************/
-static FANCTRLSTATE_ENUM_TYPE initState ( FANCTRLSTATE_ENUM_TYPE lastState )
+static FANCTRLSTATE_ENUM_TYPE initState ( FANCTRLSTATE_ENUM_TYPE thisState )
 {
   /* Load all variables from EEPROM */
   loadAllVars ( );
@@ -111,18 +183,22 @@ static FANCTRLSTATE_ENUM_TYPE initState ( FANCTRLSTATE_ENUM_TYPE lastState )
 * Returns:
 *   nextState - state to enter upon exiting this function
 ******************************************************************************/
-static FANCTRLSTATE_ENUM_TYPE normalState ( FANCTRLSTATE_ENUM_TYPE lastState )
+static FANCTRLSTATE_ENUM_TYPE normalState ( FANCTRLSTATE_ENUM_TYPE thisState )
 {
   FANCTRLSTATE_ENUM_TYPE nextState = NORMAL;            // by default, stay in normal state
-  static byte            lcdLoops  = 0;                 // number of loops run since last LCD update
   char                   lcdBuff [ LCDCOLS * LCDROWS ]; // buffer of chars used for LCD printing
 
+  /* If this is the first time entering this state, send message */
+  if ( stateChange )
+  {
+    Serial.print ( "ENTERING NORMAL STATE\n" ); // write initializing message on serial
+  }
+
   /* Update LCD if needed */
-  if ( ++lcdLoops >= LCD_DEC || lastState != NORMAL ) // if enough loops have occured or if this is first instance of NORMAL state, update LCD
+  if ( ++lcdLoops >= LCD_DEC || stateChange ) // if enough loops have occured or if this is first instance of NORMAL state, update LCD
   {
     lcdLoops = 0; // reset LCD loop counter
 
-#ifndef DEBUG_FANCTRL2
     /* Mark Temperature on first line of LCD display */
     if ( useFtemp )
     {
@@ -149,23 +225,7 @@ static FANCTRLSTATE_ENUM_TYPE normalState ( FANCTRLSTATE_ENUM_TYPE lastState )
     sprintf ( lcdBuff, "RPM:  %4hu  %4hu", Fan1RPM, Fan2RPM ); // set fan speeds
     lcd.setCursor ( 0, 1 );                                    // set cursor to start of second line on LCD
     lcd.print ( lcdBuff );                                     // print second line
-#else
-    /* First line has Int Term (quarter counts), Int State (tenths of error count times seconds), output duty (counts) */
-    sprintf ( lcdBuff, "%5d %6d %3u", pi2.getIntTerm ( ), pi2.getIntState ( ), Pwm2Duty ); // set fan info
-    lcd.setCursor ( 0, 0 );                                                                // set cursor to start of first line on LCD
-    lcd.print ( lcdBuff );                                                                 // print first line
 
-    /* Second line has Prop Term (quarter counts), Error (rpm), speed feedback (rpm) */
-    sprintf ( lcdBuff, "%5d %5d %4u", pi2.getPropTerm ( ), (int) Fan2RPMRef - Fan2RPM, Fan2RPM ); // set fan info
-    lcd.setCursor ( 0, 1 );                                                                       // set cursor to start of second line on LCD
-    lcd.print ( lcdBuff );                                                                        // print second line
-#endif
-  }
-
-  /* Read serial data if available, and echo it back */
-  if ( Serial.available ( ) )
-  {
-    Serial.write ( Serial.read ( ) );
   }
 
   /* Set desired fan speeds based on temperature */
@@ -176,6 +236,240 @@ static FANCTRLSTATE_ENUM_TYPE normalState ( FANCTRLSTATE_ENUM_TYPE lastState )
 
   return nextState;
 } // end of normalState()
+
+
+
+/******************************************************************************
+* Function:
+*   debugPi1State()
+*
+* Description:
+*   Runs the DEBUG_PI1 state routine
+*
+* Arguments:
+*   none
+*
+* Returns:
+*   nextState - state to enter upon exiting this function
+******************************************************************************/
+static FANCTRLSTATE_ENUM_TYPE debugPi1State ( FANCTRLSTATE_ENUM_TYPE thisState )
+{
+  char lcdBuff [ LCDCOLS * LCDROWS ]; // buffer of chars used for LCD printing
+
+  /* If this is the first time entering this state, send message */
+  if ( stateChange )
+  {
+    Serial.print ( "ENTERING DEBUG PI1 STATE\n" ); // write initializing message on serial
+  }
+
+  /* Update LCD if needed */
+  if ( ++lcdLoops >= LCD_DEC || stateChange ) // if enough loops have occured or if this is first instance of NORMAL state, update LCD
+  {
+    lcdLoops = 0; // reset LCD loop counter
+
+    /* First line has Int Term (quarter counts), Int State (tenths of error count times seconds), output duty (counts) */
+    sprintf ( lcdBuff, "%5d %6d %3u", pi1.getIntTerm ( ), pi1.getIntState ( ), Pwm1Duty ); // set fan info
+    lcd.setCursor ( 0, 0 );                                                                // set cursor to start of first line on LCD
+    lcd.print ( lcdBuff );                                                                 // print first line
+
+    /* Second line has Prop Term (quarter counts), Error (rpm), speed feedback (rpm) */
+    sprintf ( lcdBuff, "%5d %5d %4u", pi1.getPropTerm ( ), (int) Fan1RPMRef - Fan1RPM, Fan1RPM ); // set fan info
+    lcd.setCursor ( 0, 1 );                                                                       // set cursor to start of second line on LCD
+    lcd.print ( lcdBuff );
+
+  }
+
+  /* Set desired fan speeds based on temperature */
+  setRefFanSpeeds ( );
+
+  /* Replace Fan1 reference speed with first data word */
+  Fan1RPMRef = *(unsigned int *) ( debugDatWords + 0 );
+
+  /* Update PI1 gains with those specified in message (if different) */
+  if ( pi1Kp != debugDatWords [ 1 ] ) // second word is Kp
+  {
+    pi1Kp = debugDatWords [ 1 ];
+    saveVar ( &pi1Kp );
+  }
+  if ( pi1Ki != debugDatWords [ 2 ] ) // third word is Ki
+  {
+    pi1Ki = debugDatWords [ 2 ];
+    saveVar ( &pi1Ki );
+  }
+  if ( pi1Ki != debugDatWords [ 3 ] ) // fourth word is Ki
+  {
+    pi1Ki = debugDatWords [ 3 ];
+    saveVar ( &pi1Ki );
+  }
+  if ( pi1Imax != debugDatWords [ 4 ] ) // fifth word is Imax
+  {
+    pi1Imax = debugDatWords [ 4 ];
+    saveVar ( &pi1Imax );
+  }
+  if ( pi1Imin != debugDatWords [ 5 ] ) // sixth word is Imin
+  {
+    pi1Imin = debugDatWords [ 5 ];
+    saveVar ( &pi1Imin );
+  }
+  if ( fan1Filt != *(unsigned int *) ( debugDatWords + 6 ) ) // seventh word is Filt gain
+  {
+    fan1Filt = *(unsigned int *) ( debugDatWords + 6 );
+    saveVar ( &fan1Filt );
+  }
+
+  /* Regulate Fan Speeds to Track Reference Values */
+  regFanSpeeds ( );
+
+  return thisState; // remain in same state
+}                   // end of debugPi1State()
+
+
+/******************************************************************************
+* Function:
+*   debugPi2State()
+*
+* Description:
+*   Runs the DEBUG_PI2 state routine
+*
+* Arguments:
+*   none
+*
+* Returns:
+*   nextState - state to enter upon exiting this function
+******************************************************************************/
+static FANCTRLSTATE_ENUM_TYPE debugPi2State ( FANCTRLSTATE_ENUM_TYPE thisState )
+{
+  char lcdBuff [ LCDCOLS * LCDROWS ]; // buffer of chars used for LCD printing
+
+  /* If this is the first time entering this state, send message */
+  if ( stateChange )
+  {
+    Serial.print ( "ENTERING DEBUG PI2 STATE\n" ); // write initializing message on serial
+  }
+
+  /* Update LCD if needed */
+  if ( ++lcdLoops >= LCD_DEC || stateChange ) // if enough loops have occured or if this is first instance of NORMAL state, update LCD
+  {
+    lcdLoops = 0; // reset LCD loop counter
+
+    /* First line has Int Term (quarter counts), Int State (tenths of error count times seconds), output duty (counts) */
+    sprintf ( lcdBuff, "%5d %6d %3u", pi2.getIntTerm ( ), pi2.getIntState ( ), Pwm2Duty ); // set fan info
+    lcd.setCursor ( 0, 0 );                                                                // set cursor to start of first line on LCD
+    lcd.print ( lcdBuff );                                                                 // print first line
+
+    /* Second line has Prop Term (quarter counts), Error (rpm), speed feedback (rpm) */
+    sprintf ( lcdBuff, "%5d %5d %4u", pi2.getPropTerm ( ), (int) Fan2RPMRef - Fan2RPM, Fan2RPM ); // set fan info
+    lcd.setCursor ( 0, 1 );                                                                       // set cursor to start of second line on LCD
+    lcd.print ( lcdBuff );
+
+  }
+
+  /* Set desired fan speeds based on temperature */
+  setRefFanSpeeds ( );
+
+  /* Replace Fan2 reference speed with first data word */
+  Fan2RPMRef = *(unsigned int *) ( debugDatWords + 0 );
+
+  /* Update PI2 gains with those specified in message (if different) */
+  if ( pi2Kp != debugDatWords [ 1 ] ) // second word is Kp
+  {
+    pi2Kp = debugDatWords [ 1 ];
+    saveVar ( &pi2Kp );
+  }
+  if ( pi2Ki != debugDatWords [ 2 ] ) // third word is Ki
+  {
+    pi2Ki = debugDatWords [ 2 ];
+    saveVar ( &pi2Ki );
+  }
+  if ( pi2Ki != debugDatWords [ 3 ] ) // fourth word is Ki
+  {
+    pi2Ki = debugDatWords [ 3 ];
+    saveVar ( &pi2Ki );
+  }
+  if ( pi2Imax != debugDatWords [ 4 ] ) // fifth word is Imax
+  {
+    pi2Imax = debugDatWords [ 4 ];
+    saveVar ( &pi2Imax );
+  }
+  if ( pi2Imin != debugDatWords [ 5 ] ) // sixth word is Imin
+  {
+    pi2Imin = debugDatWords [ 5 ];
+    saveVar ( &pi2Imin );
+  }
+  if ( fan2Filt != *(unsigned int *) ( debugDatWords + 6 ) ) // seventh word is Filt gain
+  {
+    fan2Filt = *(unsigned int *) ( debugDatWords + 6 );
+    saveVar ( &fan2Filt );
+  }
+
+  /* Regulate Fan Speeds to Track Reference Values */
+  regFanSpeeds ( );
+
+  return thisState; // remain in same state
+}                   // end of debugPi2State()
+
+
+/******************************************************************************
+* Function:
+*   debugBtnState()
+*
+* Description:
+*   Runs the DEBUG_BTN state routine
+*
+* Arguments:
+*   none
+*
+* Returns:
+*   nextState - state to enter upon exiting this function
+******************************************************************************/
+static FANCTRLSTATE_ENUM_TYPE debugBtnState ( FANCTRLSTATE_ENUM_TYPE thisState )
+{
+
+  static unsigned int btn1EdgCnt = 0;                // Number of rising edges in button 1 since beginning debug
+  static unsigned int btn2EdgCnt = 0;                // Number of rising edges in button 1 since beginning debug
+  static unsigned int btn3EdgCnt = 0;                // Number of rising edges in button 1 since beginning debug
+  char                lcdBuff [ LCDCOLS * LCDROWS ]; // buffer of chars used for LCD printing
+
+  /* If this is the first time entering this state, reset button edge counts */
+  if ( stateChange )
+  {
+    btn1EdgCnt = 0;
+    btn2EdgCnt = 0;
+    btn3EdgCnt = 0;
+    Serial.print ( "ENTERING DEBUG BUTTON STATE\n" ); // write initializing message on serial
+  }
+
+  /* If a rising edge occurs on a button, update the edge count */
+  if ( btn1PressCnt == 1 )
+    btn1EdgCnt++;
+  if ( btn2PressCnt == 1 )
+    btn2EdgCnt++;
+  if ( btn3PressCnt == 1 )
+    btn3EdgCnt++;
+
+  /* Update LCD if needed */
+  if ( ++lcdLoops >= LCD_DEC || stateChange ) // if enough loops have occured or if this is first instance of NORMAL state, update LCD
+  {
+    lcdLoops = 0; // reset LCD loop counter
+
+    /* First line has button rising edge counts */
+    sprintf ( lcdBuff, "%4u %4u %4u", btn1EdgCnt, btn2EdgCnt, btn3EdgCnt ); // set button info
+    lcd.setCursor ( 0, 0 );                                                 // set cursor to start of first line on LCD
+    lcd.print ( lcdBuff );                                                  // print first line
+
+    /* Second line has button consecutive counts */
+    sprintf ( lcdBuff, "%4u %4u %4u", btn1PressCnt, btn2PressCnt, btn3PressCnt ); // set button info
+    lcd.setCursor ( 0, 1 );                                                       // set cursor to start of second line on LCD
+    lcd.print ( lcdBuff );
+
+  }
+
+  /* Turn off fans */
+  Pwm1Duty = 0; // set output to zero
+  Pwm2Duty = 0; // set output to zero
+
+  return thisState; // remain in same state
+}                   // end of debugBtnState()
 
 /******************************************************************************
 * Function:
@@ -252,18 +546,42 @@ void fanCtrlStateMachine :: reset ( void )
 ******************************************************************************/
 void fanCtrlStateMachine :: run ( void )
 {
-  switch ( state )
+  FANCTRLSTATE_ENUM_TYPE thisState = state;
+
+  switch ( thisState )
   {
   case INIT:
-    state = initState ( state ); // initialize system then set next state
+    state = initState ( thisState ); // initialize system then set next state
     break;
 
   case NORMAL:
-    state = normalState ( state ); // run normal state then move on to next state
+    state = normalState ( thisState ); // run normal state then move on to next state
+    break;
+
+  case DEBUG_PI1:
+    state = debugPi1State ( thisState ); // run debug PI1 state then move on to next state
+    break;
+
+  case DEBUG_PI2:
+    state = debugPi2State ( thisState ); // run debug PI2  state then move on to next state
+    break;
+
+  case DEBUG_BTNS:
+    state = debugBtnState ( thisState ); // run debug button  state then move on to next state
     break;
 
   default:
     reset ( ); // reset device, invalid state reached
   }
+
+  /* Check to see if any debug messages are present.  If so, switch states. */
+  state = checkDebugMsgs ( state );
+
+  /* Check to see if state changed.  If so, raise state change flag */
+  if ( state != thisState )
+    stateChange = HIGH;
+  else
+    stateChange = LOW;
+
   return;
 } // end of run

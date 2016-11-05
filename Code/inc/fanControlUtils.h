@@ -26,6 +26,17 @@
 #define MEANINGLESS_VALUE 0     // this just denotes that the value is meaningless, since it will be over-written at initialization anyway
 
 /*******************************************************************************
+ * DEBUGGING DEFINITIONS
+ ******************************************************************************/
+#define DEBUG_TIMEOUT     200    // number of loops to remain in a given debug mode
+#define DEBUGMSG_DATWORDS 8      // number of data words included in debug message payload
+#define DEBUGBUFFSIZE     48     // max buffer size for reading debug message
+#define DEBUGHEADSIZE     4      // number of bytes in header of debug message, which tells which debug mode to enter
+#define DEBUGPI1_HEAD     "DPI1" // keyword to use in header of debug message telling to enter DEBUG_PI1 mode
+#define DEBUGPI2_HEAD     "DPI2" // keyword to use in header of debug message telling to enter DEBUG_PI2 mode
+#define DEBUGBTN_HEAD     "DBTN" // keyword to use in header of debug message telling to enter DEBUG_BTNS mode
+
+/*******************************************************************************
  * DEFINITIONS FOR PERIPHERAL USE
  ******************************************************************************/
 /* LCD definitions */
@@ -110,23 +121,26 @@
 /*******************************************************************************
  * VARIABLE DECLARATIONS
  ******************************************************************************/
-extern volatile unsigned long lastEdgeTime1; // timestamp of previous edge of hall sensor 1
-extern volatile unsigned long lastEdgeTime2; // timestamp of previous edge of hall sensor 2
-extern volatile unsigned long hall1Period;   // period count for hall sensor 1 (microseconds)
-extern volatile unsigned long hall2Period;   // period count for hall sensor 2 (microseconds)
-extern unsigned int           Fan1RPM;       // Fan 1 speed, in rpm
-extern unsigned int           Fan2RPM;       // Fan 2 speed, in rpm
-extern unsigned int           Fan1RPMRef;    // Fan 1 reference speed, in rpm
-extern unsigned int           Fan2RPMRef;    // Fan 2 reference speed, in rpm
-extern byte                   Pwm1Duty;      // PWM 1 duty cycle (0-255 maps to 0%-100%)
-extern byte                   Pwm2Duty;      // PWM 2 duty cycle (0-255 maps to 0%-100%)
-extern unsigned int           Temp1;         // Temperature 1 input, stored digitally (0-1023)
-extern unsigned int           Temp2;         // Temperature 2 input, stored digitally (0-1023)
-extern unsigned long          loopsRun;      // total number of loops run since reset
-extern unsigned long          runTime_s;     // program run-time since reset (seconds)
-extern unsigned int           btn1PressCnt;  // number of consecutive times button 1 was pressed
-extern unsigned int           btn2PressCnt;  // number of consecutive times button 1 was pressed
-extern unsigned int           btn3PressCnt;  // number of consecutive times button 1 was pressed
+extern volatile unsigned long lastEdgeTime1;                       // timestamp of previous edge of hall sensor 1
+extern volatile unsigned long lastEdgeTime2;                       // timestamp of previous edge of hall sensor 2
+extern volatile unsigned long hall1Period;                         // period count for hall sensor 1 (microseconds)
+extern volatile unsigned long hall2Period;                         // period count for hall sensor 2 (microseconds)
+extern unsigned int           Fan1RPM;                             // Fan 1 speed, in rpm
+extern unsigned int           Fan2RPM;                             // Fan 2 speed, in rpm
+extern unsigned int           Fan1RPMRef;                          // Fan 1 reference speed, in rpm
+extern unsigned int           Fan2RPMRef;                          // Fan 2 reference speed, in rpm
+extern byte                   Pwm1Duty;                            // PWM 1 duty cycle (0-255 maps to 0%-100%)
+extern byte                   Pwm2Duty;                            // PWM 2 duty cycle (0-255 maps to 0%-100%)
+extern unsigned int           Temp1;                               // Temperature 1 input, stored digitally (0-1023)
+extern unsigned int           Temp2;                               // Temperature 2 input, stored digitally (0-1023)
+extern unsigned long          loopsRun;                            // total number of loops run since reset
+extern unsigned long          runTime_s;                           // program run-time since reset (seconds)
+extern byte                   stateChange;                         // high when a state change occurs
+extern unsigned int           btn1PressCnt;                        // number of consecutive times button 1 was pressed
+extern unsigned int           btn2PressCnt;                        // number of consecutive times button 1 was pressed
+extern unsigned int           btn3PressCnt;                        // number of consecutive times button 1 was pressed
+extern int                    debugDatWords [ DEBUGMSG_DATWORDS ]; // buffer of data words included in payload of debug messages
+extern byte                   lcdLoops;                            // number of loops run since last LCD update
 
 /*******************************************************************************
  * FUNCTION DECLARATIONS

@@ -10,8 +10,12 @@
 
 typedef enum FANCTRLSTATE_ENUM
 {
-  INIT,  // initialization
-  NORMAL // normal fan control operation state
+  INIT,       // initialization
+  NORMAL,     // normal fan control operation state
+  DEBUG_PI1,  // debug mode for PI controller #1
+  DEBUG_PI2,  // debug mode for PI controller #2
+  DEBUG_BTNS, // debug mode for buttons
+
 } FANCTRLSTATE_ENUM_TYPE;
 
 /*******************************************************************************

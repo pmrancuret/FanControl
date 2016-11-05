@@ -16,6 +16,14 @@
 /*******************************************************************************
  * CLASS DEFINITIONS
  ******************************************************************************/
+/* Define the 'lcd' object used for interfacing with LCD screen */
+LiquidCrystal lcd ( LCDRSPIN, // set the RS pin
+  LCDRWPIN,                   // set the RW pin
+  LCDENABLEPIN,               // set the Enable pin
+  LCDD0PIN,                   // set the data 0 pin
+  LCDD1PIN,                   // set the data 1 pin
+  LCDD2PIN,                   // set the data 2 pin
+  LCDD3PIN );                 // set the data 3 pin
 piController pi1 ( LOOPTIME_US,
   pi1Imax,
   pi1Imin,
@@ -30,23 +38,26 @@ piController pi2 ( LOOPTIME_US,
 /*******************************************************************************
  * GLOBAL VARIABLE DEFINITIONS
  ******************************************************************************/
-volatile unsigned long lastEdgeTime1 = 0; // timestamp of previous edge of hall sensor 1
-volatile unsigned long lastEdgeTime2 = 0; // timestamp of previous edge of hall sensor 2
-volatile unsigned long hall1Period   = 1; // period count for hall sensor 1
-volatile unsigned long hall2Period   = 1; // period count for hall sensor 2
-unsigned int           Fan1RPM       = 0; // Fan 1 speed, in rpm
-unsigned int           Fan2RPM       = 0; // Fan 2 speed, in rpm
-unsigned int           Fan1RPMRef    = 0; // Fan 1 reference speed, in rpm
-unsigned int           Fan2RPMRef    = 0; // Fan 2 reference speed, in rpm
-byte                   Pwm1Duty      = 0; // PWM 1 duty cycle (0-255 maps to 0%-100%)
-byte                   Pwm2Duty      = 0; // PWM 2 duty cycle (0-255 maps to 0%-100%)
-unsigned int           Temp1         = 0; // Temperature 1 input, stored digitally (0-1023)
-unsigned int           Temp2         = 0; // Temperature 2 input, stored digitally (0-1023)
-unsigned long          loopsRun      = 0; // total number of loops run since reset
-unsigned long          runTime_s     = 0; // program run-time since reset (seconds)
-unsigned int           btn1PressCnt  = 0; // number of consecutive times button 1 was pressed
-unsigned int           btn2PressCnt  = 0; // number of consecutive times button 1 was pressed
-unsigned int           btn3PressCnt  = 0; // number of consecutive times button 1 was pressed
+volatile unsigned long lastEdgeTime1                       = 0;     // timestamp of previous edge of hall sensor 1
+volatile unsigned long lastEdgeTime2                       = 0;     // timestamp of previous edge of hall sensor 2
+volatile unsigned long hall1Period                         = 1;     // period count for hall sensor 1
+volatile unsigned long hall2Period                         = 1;     // period count for hall sensor 2
+unsigned int           Fan1RPM                             = 0;     // Fan 1 speed, in rpm
+unsigned int           Fan2RPM                             = 0;     // Fan 2 speed, in rpm
+unsigned int           Fan1RPMRef                          = 0;     // Fan 1 reference speed, in rpm
+unsigned int           Fan2RPMRef                          = 0;     // Fan 2 reference speed, in rpm
+byte                   Pwm1Duty                            = 0;     // PWM 1 duty cycle (0-255 maps to 0%-100%)
+byte                   Pwm2Duty                            = 0;     // PWM 2 duty cycle (0-255 maps to 0%-100%)
+unsigned int           Temp1                               = 0;     // Temperature 1 input, stored digitally (0-1023)
+unsigned int           Temp2                               = 0;     // Temperature 2 input, stored digitally (0-1023)
+unsigned long          loopsRun                            = 0;     // total number of loops run since reset
+unsigned long          runTime_s                           = 0;     // program run-time since reset (seconds)
+byte                   stateChange                         = 0;     // high when a state change occurs
+unsigned int           btn1PressCnt                        = 0;     // number of consecutive times button 1 was pressed
+unsigned int           btn2PressCnt                        = 0;     // number of consecutive times button 1 was pressed
+unsigned int           btn3PressCnt                        = 0;     // number of consecutive times button 1 was pressed
+int                    debugDatWords [ DEBUGMSG_DATWORDS ] = { 0 }; // buffer of data words included in payload of debug messages
+extern byte            lcdLoops = 0;                                // number of loops run since last LCD update
 
 /******************************************************************************
 * Function:
