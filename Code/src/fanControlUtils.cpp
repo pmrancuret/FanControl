@@ -155,9 +155,145 @@ void checkButtonPress ( void )
 ******************************************************************************/
 void setRefFanSpeeds ( void )
 {
-  /* set some dummy fan speed commands for now */
-  Fan1RPMRef = 650;
-  Fan2RPMRef = 1100;
+  unsigned int tempRef1;       // reference temperature used for fan 1
+  unsigned int tempRef2;       // reference temperature used for fan 2
+  long int     x0, x2, y0, y2; // variables used for interpolation
+
+  /* Calculate reference temperatures based on source selection */
+  switch ( tmpsrc1 ) // switch on temperature source for fan 1
+  {
+  case TMPSRC_TMP1:   // temp sensor 1
+    tempRef1 = Temp1; // set temperature sensor 1
+    break;
+
+  case TMPSRC_TMP2:   // temp sensor 2
+    tempRef1 = Temp2; // set temperature sensor 2
+    break;
+
+  case TMPSRC_MAX:                                 // maximum temperature
+    tempRef1 = ( Temp1 >= Temp2 ) ? Temp1 : Temp2; // set maximum temperature
+    break;
+
+  case TMPSRC_MEAN:                    // mean temperature
+    tempRef1 = ( Temp1 + Temp2 ) >> 1; // set mean temperature
+    break;
+
+  default:                                         // invalid source selection
+    tmpsrc1  = TMPSRC_DEF;                         // set default (should be valid!)
+    saveVar ( &tmpsrc1 );                          // save default
+    tempRef1 = ( Temp1 >= Temp2 ) ? Temp1 : Temp2; // just use max temp for now - next time around it will use default (if default is different)
+  }
+  switch ( tmpsrc2 ) // switch on temperature source for fan 2
+  {
+  case TMPSRC_TMP1:   // temp sensor 1
+    tempRef2 = Temp1; // set temperature sensor 1
+    break;
+
+  case TMPSRC_TMP2:   // temp sensor 2
+    tempRef2 = Temp2; // set temperature sensor 2
+    break;
+
+  case TMPSRC_MAX:                                 // maximum temperature
+    tempRef2 = ( Temp1 >= Temp2 ) ? Temp1 : Temp2; // set maximum temperature
+    break;
+
+  case TMPSRC_MEAN:                    // mean temperature
+    tempRef2 = ( Temp1 + Temp2 ) >> 1; // set mean temperature
+    break;
+
+  default:                                         // invalid source selection
+    tmpsrc2  = TMPSRC_DEF;                         // set default (should be valid!)
+    saveVar ( &tmpsrc2 );                          // save default
+    tempRef2 = ( Temp1 >= Temp2 ) ? Temp1 : Temp2; // just use max temp for now - next time around it will use default (if default is different)
+  }
+
+  /* Calculate Reference Fan 1 speed */
+  if ( tempRef1 <= fan1TurnOffTmp )     // below turn-off temperature
+    Fan1RPMRef = 0;                     // set speed to zero (turn off)
+  else if ( tempRef1 <= fan1TurnOnTmp ) // between turn-off and turn-on temperature
+  {
+    if ( Fan1RPMRef > 0 )    // if fan was previously on
+      Fan1RPMRef = minRpm1;  // set speed to minimum
+    // if fan was previously off, it will remain off until turn-on temperature is reached
+  }
+  else if ( tempRef1 < fan1TblTmp4 ) // above turn-on temperature but below max table value
+  {
+    if ( tempRef1 < fan1TblTmp1 ) // below first table value, at or above turn-on point
+    {
+      x0 = (long int) fan1TurnOnTmp; // x-axis value at beginning of range
+      x2 = (long int) fan1TblTmp1;   // x-axis value at end of range
+      y0 = (long int) minRpm1;       // y-axis value at beginning of range
+      y2 = (long int) fan1TblSpd1;   // y-axis value at end of range
+    }
+    else if ( tempRef1 < fan1TblTmp2 ) // below second table value, at or above first value
+    {
+      x0 = (long int) fan1TblTmp1; // x-axis value at beginning of range
+      x2 = (long int) fan1TblTmp2; // x-axis value at end of range
+      y0 = (long int) fan1TblSpd1; // y-axis value at beginning of range
+      y2 = (long int) fan1TblSpd2; // y-axis value at end of range
+    }
+    else if ( tempRef1 < fan1TblTmp3 ) // below third table value, at or above second value
+    {
+      x0 = (long int) fan1TblTmp2; // x-axis value at beginning of range
+      x2 = (long int) fan1TblTmp3; // x-axis value at end of range
+      y0 = (long int) fan1TblSpd2; // y-axis value at beginning of range
+      y2 = (long int) fan1TblSpd3; // y-axis value at end of range
+    }
+    else // below fourth table value, at or above third value
+    {
+      x0 = (long int) fan1TblTmp3; // x-axis value at beginning of range
+      x2 = (long int) fan1TblTmp4; // x-axis value at end of range
+      y0 = (long int) fan1TblSpd3; // y-axis value at beginning of range
+      y2 = (long int) fan1TblSpd4; // y-axis value at end of range
+    }
+    Fan1RPMRef = (unsigned int) ( ( ( ( y2 - y0 ) * ( (long int) tempRef1 - x0 ) ) / ( x2 - x0 ) ) + y0 ); // interpolate to get results
+  }
+  else                         // at or above fourth table value
+    Fan1RPMRef = fan1TblSpd4;  // use fourth table value
+
+  /* Calculate Reference Fan 2 speed */
+  if ( tempRef2 <= fan2TurnOffTmp )     // below turn-off temperature
+    Fan2RPMRef = 0;                     // set speed to zero (turn off)
+  else if ( tempRef2 <= fan2TurnOnTmp ) // between turn-off and turn-on temperature
+  {
+    if ( Fan2RPMRef > 0 )    // if fan was previously on
+      Fan2RPMRef = minRpm2;  // set speed to minimum
+    // if fan was previously off, it will remain off until turn-on temperature is reached
+  }
+  else if ( tempRef2 < fan2TblTmp4 ) // above turn-on temperature but below max table value
+  {
+    if ( tempRef2 < fan2TblTmp1 ) // below first table value, at or above turn-on point
+    {
+      x0 = (long int) fan2TurnOnTmp; // x-axis value at beginning of range
+      x2 = (long int) fan2TblTmp1;   // x-axis value at end of range
+      y0 = (long int) minRpm2;       // y-axis value at beginning of range
+      y2 = (long int) fan2TblSpd1;   // y-axis value at end of range
+    }
+    else if ( tempRef2 < fan2TblTmp2 ) // below second table value, at or above first value
+    {
+      x0 = (long int) fan2TblTmp1; // x-axis value at beginning of range
+      x2 = (long int) fan2TblTmp2; // x-axis value at end of range
+      y0 = (long int) fan2TblSpd1; // y-axis value at beginning of range
+      y2 = (long int) fan2TblSpd2; // y-axis value at end of range
+    }
+    else if ( tempRef2 < fan2TblTmp3 ) // below third table value, at or above second value
+    {
+      x0 = (long int) fan2TblTmp2; // x-axis value at beginning of range
+      x2 = (long int) fan2TblTmp3; // x-axis value at end of range
+      y0 = (long int) fan2TblSpd2; // y-axis value at beginning of range
+      y2 = (long int) fan2TblSpd3; // y-axis value at end of range
+    }
+    else // below fourth table value, at or above third value
+    {
+      x0 = (long int) fan2TblTmp3; // x-axis value at beginning of range
+      x2 = (long int) fan2TblTmp4; // x-axis value at end of range
+      y0 = (long int) fan2TblSpd3; // y-axis value at beginning of range
+      y2 = (long int) fan2TblSpd4; // y-axis value at end of range
+    }
+    Fan2RPMRef = (unsigned int) ( ( ( ( y2 - y0 ) * ( (long int) tempRef2 - x0 ) ) / ( x2 - x0 ) ) + y0 ); // interpolate to get results
+  }
+  else                         // at or above fourth table value
+    Fan2RPMRef = fan2TblSpd4;  // use fourth table value
 
   return;
 } // end of setRefFanSpeeds()
@@ -178,7 +314,7 @@ void setRefFanSpeeds ( void )
 ******************************************************************************/
 void regFanSpeeds ( void )
 {
-  /* make sure fan reference is within allowable range, and calculate duty */
+  /* make sure fan1 reference is within allowable range, and calculate duty */
   if ( Fan1RPMRef < minRpm1 )
   {
     Fan1RPMRef = 0; // set speed command to zero
@@ -191,6 +327,8 @@ void regFanSpeeds ( void )
   }
   else
     Pwm1Duty = pi1.piControl ( (int) Fan1RPMRef - Fan1RPM ); // use constant duty for now
+
+  /* make sure fan2 reference is within allowable range, and calculate duty */
   if ( Fan2RPMRef < minRpm2 )
   {
     Fan2RPMRef = 0; // set speed command to zero
