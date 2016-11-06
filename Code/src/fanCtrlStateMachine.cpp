@@ -882,8 +882,8 @@ static FANCTRLSTATE_ENUM_TYPE debugTb1State ( FANCTRLSTATE_ENUM_TYPE thisState )
         sprintf ( lcdBuff, " %cC: %3hu.%hu %3hu.%hu",
           0xDF,
           DigTemp1ToC10 ( fan1TblTmp3 ) / 10,
-          abs ( DigTemp1ToC10 ( fan1TblTmp4 ) ) % 10,
-          DigTemp2ToC10 ( fan1TblTmp3 ) / 10,
+          abs ( DigTemp1ToC10 ( fan1TblTmp3 ) ) % 10,
+          DigTemp2ToC10 ( fan1TblTmp4 ) / 10,
           abs ( DigTemp2ToC10 ( fan1TblTmp4 ) ) % 10 ); // set temperatures as first line
       }
       lcd.setCursor ( 0, 0 ); // set cursor to start of first line on LCD
@@ -1031,8 +1031,8 @@ static FANCTRLSTATE_ENUM_TYPE debugTb2State ( FANCTRLSTATE_ENUM_TYPE thisState )
         sprintf ( lcdBuff, " %cC: %3hu.%hu %3hu.%hu",
           0xDF,
           DigTemp1ToC10 ( fan2TblTmp3 ) / 10,
-          abs ( DigTemp1ToC10 ( fan2TblTmp4 ) ) % 10,
-          DigTemp2ToC10 ( fan2TblTmp3 ) / 10,
+          abs ( DigTemp1ToC10 ( fan2TblTmp3 ) ) % 10,
+          DigTemp2ToC10 ( fan2TblTmp4 ) / 10,
           abs ( DigTemp2ToC10 ( fan2TblTmp4 ) ) % 10 ); // set temperatures as first line
       }
       lcd.setCursor ( 0, 0 ); // set cursor to start of first line on LCD
