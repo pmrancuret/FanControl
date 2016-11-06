@@ -79,6 +79,8 @@ static FANCTRLSTATE_ENUM_TYPE checkDebugMsgs ( FANCTRLSTATE_ENUM_TYPE thisState 
         nextState = DEBUG_BTNS; // set next state to requested debug state
       else if ( strcmp ( msgHeader, DEBUGTMP_HEAD ) == 0 )
         nextState = DEBUG_TMP; // set next state to requested debug state
+      else if ( strcmp ( msgHeader, DEBUGFON_HEAD ) == 0 )
+        nextState = DEBUG_FON; // set next state to requested debug state
       else
         continue; // did not find valid message, skip to next buffer value
 
@@ -94,7 +96,8 @@ static FANCTRLSTATE_ENUM_TYPE checkDebugMsgs ( FANCTRLSTATE_ENUM_TYPE thisState 
   if ( nextState == DEBUG_PI1 ||
     nextState == DEBUG_PI2 ||
     nextState == DEBUG_BTNS ||
-    nextState == DEBUG_TMP ) // if we are in (or entering) debug state
+    nextState == DEBUG_TMP ||
+    nextState == DEBUG_FON ) // if we are in (or entering) debug state
   {
     if ( numDebugLoops++ >= DEBUG_TIMEOUT ) // increment count of debug loops, and check for timeout
     {
@@ -584,6 +587,199 @@ static FANCTRLSTATE_ENUM_TYPE debugTmpState ( FANCTRLSTATE_ENUM_TYPE thisState )
   return thisState; // remain in same state
 }                   // end of debugTmpState()
 
+
+/******************************************************************************
+* Function:
+*   debugFonState()
+*
+* Description:
+*   Runs the DEBUG_FON state routine
+*
+* Arguments:
+*   none
+*
+* Returns:
+*   nextState - state to enter upon exiting this function
+******************************************************************************/
+static FANCTRLSTATE_ENUM_TYPE debugFonState ( FANCTRLSTATE_ENUM_TYPE thisState )
+{
+  char                lcdBuff [ LCDCOLS * LCDROWS ]; // buffer of chars used for LCD printing
+  static unsigned int dispCnt  = 0;                  // count of how many times displayed the same message.  Will swap between displaying fan1 and fan2 info as count increases.
+  static byte         dispFan2 = 0;                  // display fan 2 when high.  otherwise, display fan 1.
+
+  /* If this is the first time entering this state, reset button edge counts */
+  if ( stateChange )
+  {
+    Serial.print ( "ENTERING DEBUG FAN ON/OFF SETTINGS STATE\n" ); // write initializing message on serial
+  }
+
+  /* Update Fan on/off control Parameters with those specified in message (if different) */
+  if ( tmpsrc1 != *(unsigned int *) ( debugDatWords + 0 ) ) // first word gives setting of which temp sensor is used for fan 1 control
+  {
+    tmpsrc1 = *(unsigned int *) ( debugDatWords + 0 );
+    saveVar ( &tmpsrc1 );
+  }
+  if ( fan1TurnOffTmp != *(unsigned int *) ( debugDatWords + 1 ) ) // second word gives fan 1 turnoff temp
+  {
+    fan1TurnOffTmp = *(unsigned int *) ( debugDatWords + 1 );
+    saveVar ( &fan1TurnOffTmp );
+  }
+  if ( fan1TurnOnTmp != *(unsigned int *) ( debugDatWords + 2 ) ) // third word gives fan 1 turnon temp
+  {
+    fan1TurnOnTmp = *(unsigned int *) ( debugDatWords + 2 );
+    saveVar ( &fan1TurnOnTmp );
+  }
+  if ( minRpm1 != *(unsigned int *) ( debugDatWords + 3 ) ) // fourth word gives fan 1 min speed (turn-on speed)
+  {
+    minRpm1 = *(unsigned int *) ( debugDatWords + 3 );
+    saveVar ( &minRpm1 );
+  }
+  if ( tmpsrc2 != *(unsigned int *) ( debugDatWords + 4 ) ) // fifth word gives setting of which temp sensor is used for fan 2 control
+  {
+    tmpsrc2 = *(unsigned int *) ( debugDatWords + 4 );
+    saveVar ( &tmpsrc2 );
+  }
+  if ( fan2TurnOffTmp != *(unsigned int *) ( debugDatWords + 5 ) ) // sixth word gives fan 2 turnoff temp
+  {
+    fan2TurnOffTmp = *(unsigned int *) ( debugDatWords + 5 );
+    saveVar ( &fan2TurnOffTmp );
+  }
+  if ( fan2TurnOnTmp != *(unsigned int *) ( debugDatWords + 6 ) ) // seventh word gives fan 2 turnon temp
+  {
+    fan2TurnOnTmp = *(unsigned int *) ( debugDatWords + 6 );
+    saveVar ( &fan2TurnOnTmp );
+  }
+  if ( minRpm2 != *(unsigned int *) ( debugDatWords + 7 ) ) // eighth word gives fan 2 min speed (turn-on speed)
+  {
+    minRpm2 = *(unsigned int *) ( debugDatWords + 7 );
+    saveVar ( &minRpm2 );
+  }
+
+  /* Update LCD if needed */
+  if ( ++lcdLoops >= LCD_DEC || stateChange ) // if enough loops have occured or if this is first instance of NORMAL state, update LCD
+  {
+    lcdLoops = 0; // reset LCD loop counter
+
+    if ( ++dispCnt > DEBUG_DISPSWITCH )
+    {
+      dispCnt   = 0; // reset display count
+      dispFan2 ^= 1; // toggle fan display
+    }
+
+    if ( dispFan2 ) // display fan 2 data
+    {
+      /* Mark Temperature on first line of LCD display */
+      if ( useFtemp )
+      {
+        sprintf ( lcdBuff, "2%cF: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToF10 ( fan2TurnOffTmp ) / 10,
+          abs ( DigTemp1ToF10 ( fan2TurnOffTmp ) ) % 10,
+          DigTemp2ToF10 ( fan2TurnOnTmp ) / 10,
+          abs ( DigTemp2ToF10 ( fan2TurnOnTmp ) ) % 10 );         // set temperatures as first line
+      }
+      else
+      {
+        sprintf ( lcdBuff, "2%cC: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToC10 ( fan2TurnOffTmp ) / 10,
+          abs ( DigTemp1ToC10 ( fan2TurnOffTmp ) ) % 10,
+          DigTemp2ToC10 ( fan2TurnOnTmp ) / 10,
+          abs ( DigTemp2ToC10 ( fan2TurnOnTmp ) ) % 10 );         // set temperatures as first line
+      }
+      lcd.setCursor ( 0, 0 );         // set cursor to start of first line on LCD
+      lcd.print ( lcdBuff );          // print first line
+
+      /* Second line has temp source and min speed */
+      switch ( tmpsrc2 )
+      {
+      case TMPSRC_TMP1:                                 // temp sensor 1
+        sprintf ( lcdBuff, "2: TEMP1   %5u", minRpm2 ); /// set control info
+        break;
+
+      case TMPSRC_TMP2:                                 // temp sensor 2
+        sprintf ( lcdBuff, "2: TEMP2   %5u", minRpm2 ); // set control info
+        break;
+
+      case TMPSRC_MAX:                                  // Max Temp
+        sprintf ( lcdBuff, "2: MAX     %5u", minRpm2 ); // set control info
+        break;
+
+      case TMPSRC_MEAN:                                 // Mean Temp
+        sprintf ( lcdBuff, "2: MEAN    %5u", minRpm2 ); // set control info
+        break;
+
+      default:                                          // invalid selection
+        tmpsrc2 = TMPSRC_DEF;                           // set default (should be valid!)
+        saveVar ( &tmpsrc2 );                           // save default
+        sprintf ( lcdBuff, "2: MAX     %5u", minRpm2 ); // set control info
+      }
+      lcd.setCursor ( 0, 1 );                                    // set cursor to start of second line on LCD
+      lcd.print ( lcdBuff );
+
+    }
+    else // display fan 1 data
+    {
+      /* Mark Temperature on first line of LCD display */
+      if ( useFtemp )
+      {
+        sprintf ( lcdBuff, "1%cF: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToF10 ( fan1TurnOffTmp ) / 10,
+          abs ( DigTemp1ToF10 ( fan1TurnOffTmp ) ) % 10,
+          DigTemp2ToF10 ( fan1TurnOnTmp ) / 10,
+          abs ( DigTemp2ToF10 ( fan1TurnOnTmp ) ) % 10 ); // set temperatures as first line
+      }
+      else
+      {
+        sprintf ( lcdBuff, "1%cC: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToC10 ( fan1TurnOffTmp ) / 10,
+          abs ( DigTemp1ToC10 ( fan1TurnOffTmp ) ) % 10,
+          DigTemp2ToC10 ( fan1TurnOnTmp ) / 10,
+          abs ( DigTemp2ToC10 ( fan1TurnOnTmp ) ) % 10 ); // set temperatures as first line
+      }
+      lcd.setCursor ( 0, 0 ); // set cursor to start of first line on LCD
+      lcd.print ( lcdBuff );  // print first line
+
+      /* Second line has temp source and min speed */
+      switch ( tmpsrc1 )
+      {
+      case TMPSRC_TMP1:                                 // temp sensor 1
+        sprintf ( lcdBuff, "1: TEMP1   %5u", minRpm1 ); /// set control info
+        break;
+
+      case TMPSRC_TMP2:                                 // temp sensor 2
+        sprintf ( lcdBuff, "1: TEMP2   %5u", minRpm1 ); // set control info
+        break;
+
+      case TMPSRC_MAX:                                  // Max Temp
+        sprintf ( lcdBuff, "1: MAX     %5u", minRpm1 ); // set control info
+        break;
+
+      case TMPSRC_MEAN:                                 // Mean Temp
+        sprintf ( lcdBuff, "1: MEAN    %5u", minRpm1 ); // set control info
+        break;
+
+      default:                                          // invalid selection
+        tmpsrc1 = TMPSRC_DEF;                           // set default (should be valid!)
+        saveVar ( &tmpsrc1 );                           // save default
+        sprintf ( lcdBuff, "1: MAX     %5u", minRpm1 ); // set control info
+      }
+      lcd.setCursor ( 0, 1 ); // set cursor to start of second line on LCD
+      lcd.print ( lcdBuff );
+
+    }
+
+  }
+
+  /* Turn off fans */
+  Pwm1Duty = 0; // set output to zero
+  Pwm2Duty = 0; // set output to zero
+
+  return thisState; // remain in same state
+}                   // end of debugFonState()
+
 /******************************************************************************
 * Function:
 *   fanCtrlStateMachine()
@@ -687,6 +883,9 @@ void fanCtrlStateMachine :: run ( void )
     state = debugTmpState ( thisState ); // run debug temp sensor state then move on to next state
     break;
 
+  case DEBUG_FON:
+    state = debugFonState ( thisState ); // run fan on/off settings debug state then move on to next state
+    break;
 
   default:
     reset ( ); // reset device, invalid state reached

@@ -16,6 +16,7 @@ typedef enum FANCTRLSTATE_ENUM
   DEBUG_PI2,  // debug mode for PI controller #2
   DEBUG_BTNS, // debug mode for buttons
   DEBUG_TMP,  // debug mode for temp sensors
+  DEBUG_FON,  // debug mode for determining when fans turn on and off
 
 } FANCTRLSTATE_ENUM_TYPE;
 
