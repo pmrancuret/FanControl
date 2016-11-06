@@ -81,6 +81,10 @@ static FANCTRLSTATE_ENUM_TYPE checkDebugMsgs ( FANCTRLSTATE_ENUM_TYPE thisState 
         nextState = DEBUG_TMP; // set next state to requested debug state
       else if ( strcmp ( msgHeader, DEBUGFON_HEAD ) == 0 )
         nextState = DEBUG_FON; // set next state to requested debug state
+      else if ( strcmp ( msgHeader, DEBUGTB1_HEAD ) == 0 )
+        nextState = DEBUG_TB1; // set next state to requested debug state
+      else if ( strcmp ( msgHeader, DEBUGTB2_HEAD ) == 0 )
+        nextState = DEBUG_TB2; // set next state to requested debug state
       else
         continue; // did not find valid message, skip to next buffer value
 
@@ -97,7 +101,9 @@ static FANCTRLSTATE_ENUM_TYPE checkDebugMsgs ( FANCTRLSTATE_ENUM_TYPE thisState 
     nextState == DEBUG_PI2 ||
     nextState == DEBUG_BTNS ||
     nextState == DEBUG_TMP ||
-    nextState == DEBUG_FON ) // if we are in (or entering) debug state
+    nextState == DEBUG_FON ||
+    nextState == DEBUG_TB1 ||
+    nextState == DEBUG_TB2 ) // if we are in (or entering) debug state
   {
     if ( numDebugLoops++ >= DEBUG_TIMEOUT ) // increment count of debug loops, and check for timeout
     {
@@ -676,7 +682,7 @@ static FANCTRLSTATE_ENUM_TYPE debugFonState ( FANCTRLSTATE_ENUM_TYPE thisState )
           DigTemp1ToF10 ( fan2TurnOffTmp ) / 10,
           abs ( DigTemp1ToF10 ( fan2TurnOffTmp ) ) % 10,
           DigTemp2ToF10 ( fan2TurnOnTmp ) / 10,
-          abs ( DigTemp2ToF10 ( fan2TurnOnTmp ) ) % 10 );         // set temperatures as first line
+          abs ( DigTemp2ToF10 ( fan2TurnOnTmp ) ) % 10 ); // set temperatures as first line
       }
       else
       {
@@ -685,10 +691,10 @@ static FANCTRLSTATE_ENUM_TYPE debugFonState ( FANCTRLSTATE_ENUM_TYPE thisState )
           DigTemp1ToC10 ( fan2TurnOffTmp ) / 10,
           abs ( DigTemp1ToC10 ( fan2TurnOffTmp ) ) % 10,
           DigTemp2ToC10 ( fan2TurnOnTmp ) / 10,
-          abs ( DigTemp2ToC10 ( fan2TurnOnTmp ) ) % 10 );         // set temperatures as first line
+          abs ( DigTemp2ToC10 ( fan2TurnOnTmp ) ) % 10 ); // set temperatures as first line
       }
-      lcd.setCursor ( 0, 0 );         // set cursor to start of first line on LCD
-      lcd.print ( lcdBuff );          // print first line
+      lcd.setCursor ( 0, 0 ); // set cursor to start of first line on LCD
+      lcd.print ( lcdBuff );  // print first line
 
       /* Second line has temp source and min speed */
       switch ( tmpsrc2 )
@@ -714,7 +720,7 @@ static FANCTRLSTATE_ENUM_TYPE debugFonState ( FANCTRLSTATE_ENUM_TYPE thisState )
         saveVar ( &tmpsrc2 );                           // save default
         sprintf ( lcdBuff, "2: MAX     %5u", minRpm2 ); // set control info
       }
-      lcd.setCursor ( 0, 1 );                                    // set cursor to start of second line on LCD
+      lcd.setCursor ( 0, 1 ); // set cursor to start of second line on LCD
       lcd.print ( lcdBuff );
 
     }
@@ -779,6 +785,305 @@ static FANCTRLSTATE_ENUM_TYPE debugFonState ( FANCTRLSTATE_ENUM_TYPE thisState )
 
   return thisState; // remain in same state
 }                   // end of debugFonState()
+
+
+/******************************************************************************
+* Function:
+*   debugTb1State()
+*
+* Description:
+*   Runs the DEBUG_TB1 state routine
+*
+* Arguments:
+*   none
+*
+* Returns:
+*   nextState - state to enter upon exiting this function
+******************************************************************************/
+static FANCTRLSTATE_ENUM_TYPE debugTb1State ( FANCTRLSTATE_ENUM_TYPE thisState )
+{
+  char                lcdBuff [ LCDCOLS * LCDROWS ]; // buffer of chars used for LCD printing
+  static unsigned int dispCnt     = 0;               // count of how many times displayed the same message.  Will swap between displaying fan1 and fan2 info as count increases.
+  static byte         dispSecHalf = 0;               // display second half of table when high.  otherwise, display first half of table.
+
+  /* If this is the first time entering this state, reset button edge counts */
+  if ( stateChange )
+  {
+    Serial.print ( "ENTERING DEBUG LOOKUP TABLE 1 STATE\n" ); // write initializing message on serial
+  }
+
+  /* Update Fan Lookup Table 1 Parameters with those specified in message (if different) */
+  if ( fan1TblTmp1 != *(unsigned int *) ( debugDatWords + 0 ) ) // first word gives first temp value in table
+  {
+    fan1TblTmp1 = *(unsigned int *) ( debugDatWords + 0 );
+    saveVar ( &fan1TblTmp1 );
+  }
+  if ( fan1TblTmp2 != *(unsigned int *) ( debugDatWords + 1 ) ) // second word gives second temp value in table
+  {
+    fan1TblTmp2 = *(unsigned int *) ( debugDatWords + 1 );
+    saveVar ( &fan1TblTmp2 );
+  }
+  if ( fan1TblTmp3 != *(unsigned int *) ( debugDatWords + 2 ) ) // third word gives third temp value in table
+  {
+    fan1TblTmp3 = *(unsigned int *) ( debugDatWords + 2 );
+    saveVar ( &fan1TblTmp3 );
+  }
+  if ( fan1TblTmp4 != *(unsigned int *) ( debugDatWords + 3 ) ) // fourth word gives fourth temp value in table
+  {
+    fan1TblTmp4 = *(unsigned int *) ( debugDatWords + 3 );
+    saveVar ( &fan1TblTmp4 );
+  }
+  if ( fan1TblSpd1 != *(unsigned int *) ( debugDatWords + 4 ) ) // fifth word gives first speed value in table
+  {
+    fan1TblSpd1 = *(unsigned int *) ( debugDatWords + 4 );
+    saveVar ( &fan1TblSpd1 );
+  }
+  if ( fan1TblSpd2 != *(unsigned int *) ( debugDatWords + 5 ) ) // sixth word gives second speed value in table
+  {
+    fan1TblSpd2 = *(unsigned int *) ( debugDatWords + 5 );
+    saveVar ( &fan1TblSpd2 );
+  }
+  if ( fan1TblSpd3 != *(unsigned int *) ( debugDatWords + 6 ) ) // seventh word gives third speed value in table
+  {
+    fan1TblSpd3 = *(unsigned int *) ( debugDatWords + 6 );
+    saveVar ( &fan1TblSpd3 );
+  }
+  if ( fan1TblSpd4 != *(unsigned int *) ( debugDatWords + 7 ) ) // eighth word gives fourth speed value in table
+  {
+    fan1TblSpd4 = *(unsigned int *) ( debugDatWords + 7 );
+    saveVar ( &fan1TblSpd4 );
+  }
+
+  /* Update LCD if needed */
+  if ( ++lcdLoops >= LCD_DEC || stateChange ) // if enough loops have occured or if this is first instance of NORMAL state, update LCD
+  {
+    lcdLoops = 0; // reset LCD loop counter
+
+    if ( ++dispCnt > DEBUG_DISPSWITCH )
+    {
+      dispCnt      = 0; // reset display count
+      dispSecHalf ^= 1; // toggle fan display
+    }
+
+    if ( dispSecHalf ) // display second half of table
+    {
+      /* Mark Temperature on first line of LCD display */
+      if ( useFtemp )
+      {
+        sprintf ( lcdBuff, " %cF: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToF10 ( fan1TblTmp3 ) / 10,
+          abs ( DigTemp1ToF10 ( fan1TblTmp3 ) ) % 10,
+          DigTemp2ToF10 ( fan1TblTmp4 ) / 10,
+          abs ( DigTemp2ToF10 ( fan1TblTmp4 ) ) % 10 ); // set temperatures as first line
+      }
+      else
+      {
+        sprintf ( lcdBuff, " %cC: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToC10 ( fan1TblTmp3 ) / 10,
+          abs ( DigTemp1ToC10 ( fan1TblTmp4 ) ) % 10,
+          DigTemp2ToC10 ( fan1TblTmp3 ) / 10,
+          abs ( DigTemp2ToC10 ( fan1TblTmp4 ) ) % 10 ); // set temperatures as first line
+      }
+      lcd.setCursor ( 0, 0 ); // set cursor to start of first line on LCD
+      lcd.print ( lcdBuff );  // print first line
+
+      /* Mark hall-sensor period values on second line of LCD display */
+      sprintf ( lcdBuff, "RPM:  %4hu  %4hu", fan1TblSpd3, fan1TblSpd4 ); // set fan speeds
+      lcd.setCursor ( 0, 1 );                                            // set cursor to start of second line on LCD
+      lcd.print ( lcdBuff );                                             // print second line
+
+    }
+    else // display first half of table
+    {
+      /* Mark Temperature on first line of LCD display */
+      if ( useFtemp )
+      {
+        sprintf ( lcdBuff, " %cF: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToF10 ( fan1TblTmp1 ) / 10,
+          abs ( DigTemp1ToF10 ( fan1TblTmp1 ) ) % 10,
+          DigTemp2ToF10 ( fan1TblTmp2 ) / 10,
+          abs ( DigTemp2ToF10 ( fan1TblTmp2 ) ) % 10 ); // set temperatures as first line
+      }
+      else
+      {
+        sprintf ( lcdBuff, " %cC: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToC10 ( fan1TblTmp1 ) / 10,
+          abs ( DigTemp1ToC10 ( fan1TblTmp1 ) ) % 10,
+          DigTemp2ToC10 ( fan1TblTmp2 ) / 10,
+          abs ( DigTemp2ToC10 ( fan1TblTmp2 ) ) % 10 ); // set temperatures as first line
+      }
+      lcd.setCursor ( 0, 0 ); // set cursor to start of first line on LCD
+      lcd.print ( lcdBuff );  // print first line
+
+      /* Mark hall-sensor period values on second line of LCD display */
+      sprintf ( lcdBuff, "RPM:  %4hu  %4hu", fan1TblSpd1, fan1TblSpd2 ); // set fan speeds
+      lcd.setCursor ( 0, 1 );                                            // set cursor to start of second line on LCD
+      lcd.print ( lcdBuff );                                             // print second line
+
+    }
+
+  }
+
+  /* Turn off fans */
+  Pwm1Duty = 0; // set output to zero
+  Pwm2Duty = 0; // set output to zero
+
+  return thisState; // remain in same state
+}                   // end of debugTb1State()
+
+
+/******************************************************************************
+* Function:
+*   debugTb2State()
+*
+* Description:
+*   Runs the DEBUG_TB2 state routine
+*
+* Arguments:
+*   none
+*
+* Returns:
+*   nextState - state to enter upon exiting this function
+******************************************************************************/
+static FANCTRLSTATE_ENUM_TYPE debugTb2State ( FANCTRLSTATE_ENUM_TYPE thisState )
+{
+  char                lcdBuff [ LCDCOLS * LCDROWS ]; // buffer of chars used for LCD printing
+  static unsigned int dispCnt     = 0;               // count of how many times displayed the same message.  Will swap between displaying fan1 and fan2 info as count increases.
+  static byte         dispSecHalf = 0;               // display second half of table when high.  otherwise, display first half of table.
+
+  /* If this is the first time entering this state, reset button edge counts */
+  if ( stateChange )
+  {
+    Serial.print ( "ENTERING DEBUG LOOKUP TABLE 2 STATE\n" ); // write initializing message on serial
+  }
+
+  /* Update Fan Lookup Table 2 Parameters with those specified in message (if different) */
+  if ( fan2TblTmp1 != *(unsigned int *) ( debugDatWords + 0 ) ) // first word gives first temp value in table
+  {
+    fan2TblTmp1 = *(unsigned int *) ( debugDatWords + 0 );
+    saveVar ( &fan2TblTmp1 );
+  }
+  if ( fan2TblTmp2 != *(unsigned int *) ( debugDatWords + 1 ) ) // second word gives second temp value in table
+  {
+    fan2TblTmp2 = *(unsigned int *) ( debugDatWords + 1 );
+    saveVar ( &fan2TblTmp2 );
+  }
+  if ( fan2TblTmp3 != *(unsigned int *) ( debugDatWords + 2 ) ) // third word gives third temp value in table
+  {
+    fan2TblTmp3 = *(unsigned int *) ( debugDatWords + 2 );
+    saveVar ( &fan2TblTmp3 );
+  }
+  if ( fan2TblTmp4 != *(unsigned int *) ( debugDatWords + 3 ) ) // fourth word gives fourth temp value in table
+  {
+    fan2TblTmp4 = *(unsigned int *) ( debugDatWords + 3 );
+    saveVar ( &fan2TblTmp4 );
+  }
+  if ( fan2TblSpd1 != *(unsigned int *) ( debugDatWords + 4 ) ) // fifth word gives first speed value in table
+  {
+    fan2TblSpd1 = *(unsigned int *) ( debugDatWords + 4 );
+    saveVar ( &fan2TblSpd1 );
+  }
+  if ( fan2TblSpd2 != *(unsigned int *) ( debugDatWords + 5 ) ) // sixth word gives second speed value in table
+  {
+    fan2TblSpd2 = *(unsigned int *) ( debugDatWords + 5 );
+    saveVar ( &fan2TblSpd2 );
+  }
+  if ( fan2TblSpd3 != *(unsigned int *) ( debugDatWords + 6 ) ) // seventh word gives third speed value in table
+  {
+    fan2TblSpd3 = *(unsigned int *) ( debugDatWords + 6 );
+    saveVar ( &fan2TblSpd3 );
+  }
+  if ( fan2TblSpd4 != *(unsigned int *) ( debugDatWords + 7 ) ) // eighth word gives fourth speed value in table
+  {
+    fan2TblSpd4 = *(unsigned int *) ( debugDatWords + 7 );
+    saveVar ( &fan2TblSpd4 );
+  }
+
+  /* Update LCD if needed */
+  if ( ++lcdLoops >= LCD_DEC || stateChange ) // if enough loops have occured or if this is first instance of NORMAL state, update LCD
+  {
+    lcdLoops = 0; // reset LCD loop counter
+
+    if ( ++dispCnt > DEBUG_DISPSWITCH )
+    {
+      dispCnt      = 0; // reset display count
+      dispSecHalf ^= 1; // toggle fan display
+    }
+
+    if ( dispSecHalf ) // display second half of table
+    {
+      /* Mark Temperature on first line of LCD display */
+      if ( useFtemp )
+      {
+        sprintf ( lcdBuff, " %cF: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToF10 ( fan2TblTmp3 ) / 10,
+          abs ( DigTemp1ToF10 ( fan2TblTmp3 ) ) % 10,
+          DigTemp2ToF10 ( fan2TblTmp4 ) / 10,
+          abs ( DigTemp2ToF10 ( fan2TblTmp4 ) ) % 10 ); // set temperatures as first line
+      }
+      else
+      {
+        sprintf ( lcdBuff, " %cC: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToC10 ( fan2TblTmp3 ) / 10,
+          abs ( DigTemp1ToC10 ( fan2TblTmp4 ) ) % 10,
+          DigTemp2ToC10 ( fan2TblTmp3 ) / 10,
+          abs ( DigTemp2ToC10 ( fan2TblTmp4 ) ) % 10 ); // set temperatures as first line
+      }
+      lcd.setCursor ( 0, 0 ); // set cursor to start of first line on LCD
+      lcd.print ( lcdBuff );  // print first line
+
+      /* Mark hall-sensor period values on second line of LCD display */
+      sprintf ( lcdBuff, "RPM:  %4hu  %4hu", fan2TblSpd3, fan2TblSpd4 ); // set fan speeds
+      lcd.setCursor ( 0, 1 );                                            // set cursor to start of second line on LCD
+      lcd.print ( lcdBuff );                                             // print second line
+
+    }
+    else // display first half of table
+    {
+      /* Mark Temperature on first line of LCD display */
+      if ( useFtemp )
+      {
+        sprintf ( lcdBuff, " %cF: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToF10 ( fan2TblTmp1 ) / 10,
+          abs ( DigTemp1ToF10 ( fan2TblTmp1 ) ) % 10,
+          DigTemp2ToF10 ( fan2TblTmp2 ) / 10,
+          abs ( DigTemp2ToF10 ( fan2TblTmp2 ) ) % 10 ); // set temperatures as first line
+      }
+      else
+      {
+        sprintf ( lcdBuff, " %cC: %3hu.%hu %3hu.%hu",
+          0xDF,
+          DigTemp1ToC10 ( fan2TblTmp1 ) / 10,
+          abs ( DigTemp1ToC10 ( fan2TblTmp1 ) ) % 10,
+          DigTemp2ToC10 ( fan2TblTmp2 ) / 10,
+          abs ( DigTemp2ToC10 ( fan2TblTmp2 ) ) % 10 ); // set temperatures as first line
+      }
+      lcd.setCursor ( 0, 0 ); // set cursor to start of first line on LCD
+      lcd.print ( lcdBuff );  // print first line
+
+      /* Mark hall-sensor period values on second line of LCD display */
+      sprintf ( lcdBuff, "RPM:  %4hu  %4hu", fan2TblSpd1, fan2TblSpd2 ); // set fan speeds
+      lcd.setCursor ( 0, 1 );                                            // set cursor to start of second line on LCD
+      lcd.print ( lcdBuff );                                             // print second line
+
+    }
+
+  }
+
+  /* Turn off fans */
+  Pwm1Duty = 0; // set output to zero
+  Pwm2Duty = 0; // set output to zero
+
+  return thisState; // remain in same state
+}                   // end of debugTb2State()
+
 
 /******************************************************************************
 * Function:
@@ -885,6 +1190,14 @@ void fanCtrlStateMachine :: run ( void )
 
   case DEBUG_FON:
     state = debugFonState ( thisState ); // run fan on/off settings debug state then move on to next state
+    break;
+
+  case DEBUG_TB1:
+    state = debugTb1State ( thisState ); // run fan on/off settings debug state then move on to next state
+    break;
+
+  case DEBUG_TB2:
+    state = debugTb2State ( thisState ); // run fan on/off settings debug state then move on to next state
     break;
 
   default:

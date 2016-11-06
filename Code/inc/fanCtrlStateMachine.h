@@ -17,6 +17,8 @@ typedef enum FANCTRLSTATE_ENUM
   DEBUG_BTNS, // debug mode for buttons
   DEBUG_TMP,  // debug mode for temp sensors
   DEBUG_FON,  // debug mode for determining when fans turn on and off
+  DEBUG_TB1,  // debug mode for setting fan speed-temp lookup table 1
+  DEBUG_TB2,  // debug mode for setting fan speed-temp lookup table 2
 
 } FANCTRLSTATE_ENUM_TYPE;
 
