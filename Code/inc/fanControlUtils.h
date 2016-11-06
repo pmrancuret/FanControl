@@ -16,7 +16,7 @@
 /*******************************************************************************
  * DEFINITIONS OF CODE VERSION
  ******************************************************************************/
-#define CODEVER 0x00000004 // software version code, checked in EEPROM for changes.  Change this value whenever making a new software version to re-load eeprom values.
+#define CODEVER 0x00000005 // software version code, checked in EEPROM for changes.  Change this value whenever making a new software version to re-load eeprom values.
 
 /*******************************************************************************
  * SYSTEM DEFINITIONS
@@ -32,11 +32,15 @@
 #define DEBUGMSG_DATWORDS 8      // number of data words included in debug message payload
 #define DEBUGBUFFSIZE     48     // max buffer size for reading debug message
 #define DEBUGHEADSIZE     4      // number of bytes in header of debug message, which tells which debug mode to enter
+#define DEBUG_DISPSWITCH  25     // number of times display is updated before it switches to different value, in debug modes where display changes.
 #define NORMAL_HEAD       "NRML" // keyword to use in header when returning to normal mode
 #define DEBUGPI1_HEAD     "DPI1" // keyword to use in header of debug message telling to enter DEBUG_PI1 mode
 #define DEBUGPI2_HEAD     "DPI2" // keyword to use in header of debug message telling to enter DEBUG_PI2 mode
 #define DEBUGBTN_HEAD     "DBTN" // keyword to use in header of debug message telling to enter DEBUG_BTNS mode
 #define DEBUGTMP_HEAD     "DTMP" // keyword to use in header of debug message telling to enter DEBUG_TMP mode
+#define DEBUGFON_HEAD     "DFON" // keyword to use in header of debug message telling to enter DEBUG_FON mode
+#define DEBUGTB1_HEAD     "DTB1" // keyword to use in header of debug message telling to enter DEBUG_TB1 mode
+#define DEBUGTB2_HEAD     "DTB2" // keyword to use in header of debug message telling to enter DEBUG_TB2 mode
 
 /*******************************************************************************
  * DEFINITIONS FOR PERIPHERAL USE
@@ -75,6 +79,13 @@
 #define BTN1PIN 4  // Arduino digital pin used for reading button 1
 #define BTN2PIN A2 // Arduino digital pin used for reading button 1
 #define BTN3PIN A3 // Arduino digital pin used for reading button 1
+
+/* Temp sensor input selection definitions */
+#define TMPSRC_TMP1 0 // selects TMP1 as temp input source
+#define TMPSRC_TMP2 1 // selects TMP2 as temp input source
+#define TMPSRC_MAX  2 // selects max value of TMP1 & TMP2 as temp input source
+#define TMPSRC_MEAN 3 // selects mean value of TMP1 & TMP2 as temp input source
+#define TMPSRC_DEF TMPSRC_MAX // default temperature input source
 
 /*******************************************************************************
  * USEFUL MACROS FOR TEMPERATURE CONVERSION
