@@ -32,7 +32,7 @@
 #define DEBUGMSG_DATWORDS 8      // number of data words included in debug message payload
 #define DEBUGBUFFSIZE     48     // max buffer size for reading debug message
 #define DEBUGHEADSIZE     4      // number of bytes in header of debug message, which tells which debug mode to enter
-#define DEBUG_DISPSWITCH  25     // number of times display is updated before it switches to different value, in debug modes where display changes.
+#define DEBUG_DISPSWITCH  20     // number of times display is updated before it switches to different value, in debug modes where display changes.
 #define NORMAL_HEAD       "NRML" // keyword to use in header when returning to normal mode
 #define DEBUGPI1_HEAD     "DPI1" // keyword to use in header of debug message telling to enter DEBUG_PI1 mode
 #define DEBUGPI2_HEAD     "DPI2" // keyword to use in header of debug message telling to enter DEBUG_PI2 mode
@@ -55,7 +55,7 @@
 #define LCDD3PIN     13 // Arduino pin connected to LCD 'Data 3' pin
 #define LCDCOLS      16 // number of columns of LCD screen
 #define LCDROWS      2  // number of rows of LCD screen
-#define LCD_DEC      4  // decimation of loop iterations to print to lcd (eg 4 means that the LCD screen is updated every fourth loop)
+#define LCD_DEC      5  // decimation of loop iterations to print to lcd (eg 4 means that the LCD screen is updated every fourth loop)
 
 /* PWM output definitions */
 #define PWM1PIN 5 // Arduino pin used for PWM 1 output

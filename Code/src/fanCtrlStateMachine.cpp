@@ -135,6 +135,7 @@ static FANCTRLSTATE_ENUM_TYPE initState ( FANCTRLSTATE_ENUM_TYPE thisState )
 
   /* Initialize the LCD Screen and print initialization message */
   lcd.begin ( LCDCOLS, LCDROWS );  // initialize LCD display (16 cols, 2 rows)
+  lcd.noAutoscroll ( );            // turn off auto-scroll
   lcd.print ( "INITIALIZING..." ); // set screen to say initializing
 
   /* Initialize the serial bus and print initialization message */
@@ -214,7 +215,10 @@ static FANCTRLSTATE_ENUM_TYPE normalState ( FANCTRLSTATE_ENUM_TYPE thisState )
   /* Update LCD if needed */
   if ( ++lcdLoops >= LCD_DEC || stateChange ) // if enough loops have occured or if this is first instance of NORMAL state, update LCD
   {
-    lcdLoops = 0; // reset LCD loop counter
+    lcdLoops = 0;                   // reset LCD loop counter
+    lcd.begin ( LCDCOLS, LCDROWS ); // initialize LCD display (16 cols, 2 rows)
+    lcd.noAutoscroll ( );
+    lcd.home ( );
 
     /* Mark Temperature on first line of LCD display */
     if ( useFtemp )
@@ -1083,7 +1087,6 @@ static FANCTRLSTATE_ENUM_TYPE debugTb2State ( FANCTRLSTATE_ENUM_TYPE thisState )
 
   return thisState; // remain in same state
 }                   // end of debugTb2State()
-
 
 /******************************************************************************
 * Function:
